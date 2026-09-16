@@ -31,11 +31,14 @@ const wordmark = css({
   margin: '0 0 0.5rem 0',
 })
 
+/* See the note on text measures in Home.tsx: a rem cap would collapse this to
+   ~135px on a phone, wrapping the tagline over six lines inside a 376px
+   column. `ch` keeps the measure constant in characters. */
 const blurb = css({
   fontSize: '0.9em',
   lineHeight: '1.4',
   color: 'subtle',
-  maxWidth: '38rem',
+  maxWidth: '42ch',
   margin: '0',
 })
 

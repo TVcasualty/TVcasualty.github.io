@@ -157,6 +157,30 @@ export const globalCss = defineGlobalStyles({
     padding: '0',
     listStyle: 'none',
   },
+
+  /* ------------------------------------------------------------------ *
+   * Minimum tap target (WCAG 2.2 §2.5.8)
+   *
+   * The one place px is correct rather than rem. Everything else scales with
+   * the fluid ladder, which is the point of the design — but it scales
+   * interactive padding too, so at 390px footer links rendered 16px tall and
+   * at 320px only 12px. A finger is the same size at every viewport, so the
+   * floor has to be an absolute length; in rem it would shrink exactly where
+   * it is needed most.
+   *
+   * 24px is the AA bar. Applied as a floor via min-height with centred
+   * content, so it is a no-op wherever the natural height already clears it
+   * (at >=1100px these links are 33px) and never shifts the desktop layout.
+   *
+   * Deliberately not done with an expanded ::after overlay: list items sit
+   * ~18px apart on a phone, so 24px overlays would overlap each other and
+   * steal one another's taps. The spacing genuinely needs to grow.
+   * ------------------------------------------------------------------ */
+  'li a, div.button a, .whopper-panel a': {
+    minHeight: '24px',
+    display: 'inline-flex',
+    alignItems: 'center',
+  },
   'img, svg': {
     display: 'block',
     maxWidth: '100%',
@@ -347,7 +371,11 @@ export const globalCss = defineGlobalStyles({
   },
   '#navbar a': {
     textDecoration: 'none',
-    display: 'inline-block',
+    /* See the tap-target note above: 24px floor in px, not rem, so it does
+       not shrink on the phones that need it. */
+    minHeight: '24px',
+    display: 'inline-flex',
+    alignItems: 'center',
     padding: '0.25em 0.5em 0.35em 0.5em',
     borderRadius: '1em',
     position: 'relative',
@@ -387,8 +415,12 @@ export const globalCss = defineGlobalStyles({
     position: 'absolute',
     top: '0',
     right: '0',
+    /* Must match .whopper-label exactly — this invisible input is the real
+       hit area sitting over it. Both carry the 24px floor. */
     width: '3.6em',
+    minWidth: '44px',
     height: '2.4em',
+    minHeight: '24px',
     margin: '0',
     opacity: '0',
     cursor: 'pointer',
@@ -400,7 +432,9 @@ export const globalCss = defineGlobalStyles({
     justifyContent: 'center',
     gap: '0.45em',
     width: '3.6em',
+    minWidth: '44px',
     height: '2.4em',
+    minHeight: '24px',
     padding: '0 0.7em',
     borderRadius: '1em',
     boxSizing: 'border-box',
@@ -421,7 +455,12 @@ export const globalCss = defineGlobalStyles({
     position: 'absolute',
     top: 'calc(100% + 1rem)',
     right: '0',
-    minWidth: '22rem',
+    /* `em`, not `rem`. A 22rem panel is 220px at desktop but only 78px at
+       390px, because rem shrinks with the fluid ladder — the panel became a
+       narrow strip barely wider than the word "Contact". em tracks the
+       navbar's own type size, so the panel stays proportional to its links at
+       every width. */
+    minWidth: '11em',
     display: 'none',
     padding: '1rem',
     borderRadius: '1.5em',

@@ -47,13 +47,19 @@ const cardGrid = css({
   md: { gridTemplateColumns: '1fr 1fr 1fr' },
 })
 
+/* Text measures are capped in `ch`, not `rem`.
+   A rem cap looks right at one width only: body font-size steps from 3.85rem
+   to 2.85rem at 670px, so a 70rem cap is ~25em of text on desktop but ~18em
+   on a phone, where the paragraph collapses to a narrow column inside a much
+   wider band. `ch` is relative to this element's own font, so the measure
+   stays at a constant number of characters at every width. */
 const prose = css({
-  maxWidth: '70rem',
+  maxWidth: '66ch',
   fontSize: '1.05em',
 })
 
 const callout = css({
-  maxWidth: '80rem',
+  maxWidth: '46ch',
   fontSize: '1.2em',
   lineHeight: '1.3',
 })

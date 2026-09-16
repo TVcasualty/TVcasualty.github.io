@@ -22,10 +22,11 @@ const code = css({
   margin: '0 0 1rem 0',
 })
 
+/* `ch`, not `rem` — see the note on text measures in Home.tsx. */
 const lede = css({
   fontSize: '1.3em',
   fontWeight: 'bold',
-  maxWidth: '70rem',
+  maxWidth: '44ch',
 })
 
 /**
