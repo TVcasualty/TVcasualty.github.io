@@ -88,16 +88,25 @@ export const wideGamutColors = defineSemanticTokens.colors({
  * `--colors-*` variables. Utilities like `bg: 'pageBg'` therefore recolour
  * themselves purely by sitting inside — or being — a band.
  *
- * Contrast note (BRIEF §6): on `brandYellow` the text token is `screenBlack`,
- * never white, because white on yellow fails 4.5:1.
+ * Contrast (BRIEF §6): every text, label and button pairing below clears
+ * 4.5:1, and accents and focus rings clear 3:1, in all eight bands. Verified by
+ * `python3 tools/check-contrast.py`, which reads the generated stylesheet and
+ * fails on any regression — run it after changing anything here.
+ *
+ * Two consequences of that worth knowing before "restoring" a colour:
+ *
+ * - The gray band uses `darkGray` (#57554e), not the `psdDarkGray` (#7a8085)
+ *   BRIEF §3.9 shows. #7a8085 only reaches 4.00:1 against white, so the hero's
+ *   own body text would have failed.
+ * - On yellow, text is always `screenBlack` and never white, as §6 warns.
  */
 export const semanticColors = defineSemanticTokens.colors({
   ...wideGamutColors,
 
   pageBg: {
     value: {
-      base: '{colors.psdDarkGray}',
-      _bandGray: '{colors.psdDarkGray}',
+      base: '{colors.darkGray}',
+      _bandGray: '{colors.darkGray}',
       _bandDarkgray: '{colors.darkestGray}',
       _bandYellow: '{colors.brandYellow}',
       _bandWhite: '{colors.lightestGray}',
@@ -123,22 +132,22 @@ export const semanticColors = defineSemanticTokens.colors({
   /** Body copy and secondary labels: text, stepped back a little. */
   subtle: {
     value: {
-      base: '{colors.psdLightestGray}',
-      _bandGray: '{colors.psdLightestGray}',
+      base: '{colors.lightestGray}',
+      _bandGray: '{colors.lightestGray}',
       _bandDarkgray: '{colors.psdLightGray}',
       _bandYellow: '{colors.screenBlack}',
       _bandWhite: '{colors.darkGray}',
       _bandBlack: '{colors.psdLightGray}',
-      _bandPurple: '{colors.lightBlue}',
-      _bandAqua: '{colors.lightGreen}',
+      _bandPurple: '{colors.psdLightestGray}',
+      _bandAqua: '{colors.lightestGray}',
       _bandAquaLight: '{colors.screenBlack}',
     },
   },
   /** Hairlines, dividers and card borders. */
   subtler: {
     value: {
-      base: '{colors.psdMidGray}',
-      _bandGray: '{colors.psdMidGray}',
+      base: '{colors.psdLightGray}',
+      _bandGray: '{colors.psdLightGray}',
       _bandDarkgray: '{colors.darkGray}',
       _bandYellow: '{colors.screenBlack}',
       _bandWhite: '{colors.psdLightGray}',
@@ -165,14 +174,14 @@ export const semanticColors = defineSemanticTokens.colors({
   /** Card surfaces sit slightly off the band background. */
   cardBg: {
     value: {
-      base: '{colors.psdMidGray}',
-      _bandGray: '{colors.psdMidGray}',
-      _bandDarkgray: '{colors.screenBlack}',
+      base: '{colors.screenBlack}',
+      _bandGray: '{colors.screenBlack}',
+      _bandDarkgray: '{colors.psdDarkestGray}',
       _bandYellow: '{colors.white}',
       _bandWhite: '{colors.white}',
       _bandBlack: '{colors.darkestGray}',
       _bandPurple: '{colors.darkPurple}',
-      _bandAqua: '{colors.aqua}',
+      _bandAqua: '{colors.white}',
       _bandAquaLight: '{colors.white}',
     },
   },
@@ -185,7 +194,7 @@ export const semanticColors = defineSemanticTokens.colors({
       _bandWhite: '{colors.screenBlack}',
       _bandBlack: '{colors.lightestGray}',
       _bandPurple: '{colors.white}',
-      _bandAqua: '{colors.white}',
+      _bandAqua: '{colors.screenBlack}',
       _bandAquaLight: '{colors.screenBlack}',
     },
   },
@@ -204,8 +213,8 @@ export const semanticColors = defineSemanticTokens.colors({
   },
   buttonText: {
     value: {
-      base: '{colors.psdDarkGray}',
-      _bandGray: '{colors.psdDarkGray}',
+      base: '{colors.darkGray}',
+      _bandGray: '{colors.darkGray}',
       _bandDarkgray: '{colors.black}',
       _bandYellow: '{colors.white}',
       _bandWhite: '{colors.white}',

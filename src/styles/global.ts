@@ -56,7 +56,7 @@ export const globalCss = defineGlobalStyles({
        over — see the html[data-color] rule. */
     backgroundColor: 'pageBg',
     backgroundImage:
-      'linear-gradient(to bottom, {colors.psdDarkGray} 0 50%, {colors.darkestGray} 50% 100%)',
+      'linear-gradient(to bottom, {colors.darkGray} 0 50%, {colors.darkestGray} 50% 100%)',
     backgroundAttachment: 'fixed',
   },
   'html[data-color]': {
