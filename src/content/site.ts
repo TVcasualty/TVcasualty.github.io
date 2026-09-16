@@ -67,7 +67,6 @@ export const site = {
   nav: [
     { label: 'Work', href: '#work' },
     { label: 'Stack', href: '#stack' },
-    { label: 'Writing', href: '#writing' },
     { label: 'Contact', href: '#contact' },
   ] satisfies NavLink[],
 

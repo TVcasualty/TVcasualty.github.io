@@ -340,6 +340,41 @@ export const globalCss = defineGlobalStyles({
   },
 
   /* ------------------------------------------------------------------ *
+   * Footer band: the full-bleed embed
+   *
+   * The footer's entire content is one iframe that has to touch all four edges
+   * of its band, so this cancels the band's own gutter and measure. It is scoped
+   * to `footer.colorsection` rather than done with a utility class because it is
+   * a property of this one band, and because it has to beat the `.colorsection`
+   * rule above on specificity — that rule sets side padding with `max()`
+   * longhands, so a plain `padding: 0` from a lower-specificity selector would
+   * lose to them and leave a visible side gutter.
+   *
+   * Zeroing the padding also removes the asymmetric 6rem/8rem vertical padding,
+   * which is what would otherwise show as a dark strip above and below the frame.
+   *
+   * The band keeps its `min-height: 100dvh` floor from above; it is not fighting
+   * the iframe's `100vh`, since `vh >= dvh` means the content is always at least
+   * as tall as the floor. No `justify-content` override is needed for the same
+   * reason: with the box exactly as tall as its one child, centring is a no-op.
+   * ------------------------------------------------------------------ */
+  'footer.colorsection': {
+    padding: '0',
+    paddingLeft: '0',
+    paddingRight: '0',
+  },
+  /* `.band-inner`'s 110rem cap is what makes every other band a centred column,
+     and it is exactly what must not apply here: capped at 110rem the frame would
+     sit as a boxed widget in the middle of a wide screen. Overridden rather than
+     omitted from the markup so ColorSection stays one component with one shape
+     for every band. */
+  'footer.colorsection > .band-inner': {
+    maxWidth: 'none',
+    width: '100%',
+    margin: '0',
+  },
+
+  /* ------------------------------------------------------------------ *
    * Navbar (BRIEF §3.4)
    *
    * Fixed and transparent until nav.js adds `.scrolled`, at which point it

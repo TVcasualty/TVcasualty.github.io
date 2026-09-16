@@ -117,17 +117,6 @@ export const specs: Spec[] = [
 ]
 
 /**
- * The Writing band.
- *
- * Prose only, on purpose. The old CTA pointed at a named external site, which
- * is the same class of thing as the deleted demo links — a five-year-old page
- * on a free host — so it went with them. Nothing here needs a URL to make
- * sense; anyone who wants to read it can ask, and Contact is one band down.
- */
-export const writing =
-  'I keep notes so I stop re-learning the same things. Explanations, dead ends, and the reasoning behind decisions that will look ridiculous in a year. Not a publication \u2014 a notebook that happens to be legible.'
-
-/**
  * The Contact band's callout, above the buttons.
  *
  * Deliberately silent about whether I am looking for work: that changes without

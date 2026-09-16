@@ -5,7 +5,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { SpecGrid } from '../components/SpecGrid'
 import { site } from '../content/site'
-import { work, workLede, specs, writing, contact } from '../content/bands'
+import { work, workLede, specs, contact } from '../content/bands'
 
 const heroInner = css({
   textAlign: 'center',
@@ -70,10 +70,10 @@ const contactGrid = css({
 /**
  * The single-page home route.
  *
- * The band rhythm follows BRIEF §5, minus the deleted About band and with Work
- * recoloured: gray → black → yellow → aqua-light → purple, with the darkgray
- * footer supplied by Layout. No two adjacent bands share a colour, which is the
- * one hard rule of §3.3.
+ * The band rhythm follows BRIEF §5, minus the deleted About and Writing bands
+ * and with Work recoloured: gray → aqua-light → yellow → purple, with the
+ * darkgray footer supplied by Layout. No two adjacent bands share a colour,
+ * which is the one hard rule of §3.3.
  */
 export const Home = () => (
   <Layout path="/">
@@ -85,7 +85,7 @@ export const Home = () => (
       <p class={heroLede}>{site.tagline}</p>
     </ColorSection>
 
-    <ColorSection color="black" id="work" eyebrow="How it goes" heading="Work">
+    <ColorSection color="aqua-light" id="work" eyebrow="How it goes" heading="Work">
       <p class={callout}>{workLede}</p>
       <ul class={cardGrid}>
         {work.map((card) => (
@@ -96,18 +96,6 @@ export const Home = () => (
 
     <ColorSection color="yellow" id="stack" eyebrow="Spec sheet" heading="Stack">
       <SpecGrid groups={specs} />
-    </ColorSection>
-
-    <ColorSection
-      color="aqua-light"
-      id="writing"
-      eyebrow="Notebook"
-      heading="Writing"
-    >
-      {/* Prose only. The old CTA pointed at a named external site, which is the
-          same kind of thing as the removed demo links; see the note in
-          src/content/bands.ts. */}
-      <p class={callout}>{writing}</p>
     </ColorSection>
 
     <ColorSection color="purple" id="contact" eyebrow="Say something" heading="Contact">
