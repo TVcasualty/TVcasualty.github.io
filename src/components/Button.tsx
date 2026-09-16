@@ -1,6 +1,6 @@
 import type { Child } from 'hono/jsx'
 
-export type ButtonVariant = 'default' | 'big' | 'center' | 'chunky'
+export type ButtonVariant = 'default' | 'big' | 'center'
 
 export type ButtonProps = {
   href: string
@@ -19,9 +19,7 @@ export type ButtonProps = {
  * Deliberately a `div` wrapping an `a`, matching the source design: the
  * wrapper carries the pill (background, radius, the asymmetric padding that
  * optically centres the label) while the anchor stays a plain inline hit
- * target. `chunky` inverts that — see the globalCss rules — handing the
- * gradient and the four-layer shadow to the anchor so its `:active` padding
- * shift can physically depress the label.
+ * target.
  *
  * Colours come from the `buttonBg` / `buttonText` tokens, so a button
  * automatically matches whichever band contains it.

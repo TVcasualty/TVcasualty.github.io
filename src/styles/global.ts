@@ -253,42 +253,6 @@ export const globalCss = defineGlobalStyles({
     display: 'block',
   },
 
-  /* The chunky plastic CTA. The wrapper goes transparent and hands all the
-     rendering to the <a>, which carries the gradient and the shadow stack. */
-  'div.button.chunky': {
-    backgroundColor: 'transparent',
-    color: 'inherit',
-    padding: '0',
-    borderRadius: '3em',
-  },
-  /* Four layers, each doing a specific job — do not collapse them:
-       1  inset top highlight     — the lit upper lip of the plastic
-       2  inset bottom shade      — thickness under the lip
-       3  inset bottom underlight — light bouncing up inside the shell
-       4  outer cast shadow       — lifts the button off the page      */
-  'div.button.chunky a': {
-    display: 'inline-block',
-    fontSize: '1.78em',
-    fontWeight: 'bold',
-    padding: '0.1em 0.5em 0.3em 0.5em',
-    borderRadius: '3em',
-    textDecoration: 'none',
-    color: 'white',
-    backgroundImage: 'linear-gradient({colors.purple}, {colors.darkPurple})',
-    textShadow: '0 0.02em 0.04em rgba(0, 0, 0, 0.4)',
-    boxShadow:
-      'inset 0 0.05em 0.05em rgba(255, 255, 255, 0.6), inset 0 -0.05em 0.08em rgba(0, 0, 0, 0.5), inset 0 -0.01em 0.5em rgba(255, 255, 255, 0.3), 0 0.05em 0.1em rgba(0, 0, 0, 0.4)',
-    userSelect: 'none',
-  },
-  /* Padding shifts by .05em top and bottom so the label physically travels
-     downwards on press. That detail is most of the charm. */
-  'div.button.chunky a:active': {
-    padding: '0.15em 0.5em 0.25em 0.5em',
-    backgroundImage: 'linear-gradient({colors.darkPurple}, #7800ff)',
-    boxShadow:
-      'inset 0 0.05em 0.15em rgba(0, 0, 0, 0.5), inset 0 -0.03em 0.03em rgba(255, 255, 255, 0.6), 0 0.05em 0.2em rgba(0, 0, 0, 0.2)',
-  },
-
   /* ------------------------------------------------------------------ *
    * Colour bands
    *

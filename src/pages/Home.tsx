@@ -73,10 +73,14 @@ const contactGrid = css({
   '& div.button': { margin: '0' },
 })
 
-const emailLine = css({
+/* The hero CTA is the flat `big` pill, same visual language as every other
+   button on the page. It only needs to be a little larger than a body-copy
+   button to hold its own against a 2em lede, so this is a size bump and
+   nothing else — deliberately no gradient or shadow stack. The hero's former
+   plastic-button treatment was removed on purpose; see git history before
+   reinstating it. */
+const heroCta = css({
   fontSize: '1.4em',
-  fontWeight: 'bold',
-  maxWidth: '90rem',
 })
 
 /**
@@ -88,12 +92,12 @@ const emailLine = css({
  */
 export const Home = () => (
   <Layout path="/">
-    {/* Hero. Carries the page's only <h1> and the single chunky CTA. */}
+    {/* Hero. Carries the page's only <h1> and the primary CTA. */}
     <ColorSection color="gray" as="header" id="hero" class={heroInner}>
       <p class={heroRole}>{site.role}</p>
       <h1>{site.name}</h1>
       <p class={heroLede}>{site.tagline}</p>
-      <Button href="#work" variant="chunky">
+      <Button href="#work" variant="big" class={heroCta}>
         See my work
       </Button>
     </ColorSection>
@@ -125,10 +129,9 @@ export const Home = () => (
       heading="Writing"
     >
       <p class={callout}>
-        {/* TODO(owner): replace with a line about what you actually write
-            about, once there is more than snippets in there. */}
-        I keep a running notebook of snippets, fixes and short write-ups —
-        mostly the things I did not want to look up twice.
+        Short write-ups on the JavaScript I want to understand properly rather
+        than re-look-up — higher-order functions, classes, objects, and the odd
+        bit of Express and React.
       </p>
       <Button href="https://code-repo.netlify.app" variant="big" external>
         Read the notebook
@@ -137,14 +140,20 @@ export const Home = () => (
 
     <ColorSection color="purple" id="contact" eyebrow="Say hello" heading="Contact">
       <p class={callout}>
-        {/* TODO(owner): adjust to reflect whether you are actually looking. */}
+        {/* TODO(owner): this says you are available, which is a claim about your
+            situation that only you can make. Pick one and delete the rest:
+              · actively looking  → "Looking for my next role — permanent or
+                contract. The fastest way to reach me is email."
+              · open but employed → keep the line below.
+              · not looking       → "Not looking right now, but always happy to
+                talk shop." */}
         Open to interesting work and good problems. The fastest way to reach me
         is email.
       </p>
-      <p class={emailLine}>
-        <a href={`mailto:${site.email}`}>{site.email}</a>
-      </p>
       <div class={contactGrid}>
+        <Button href={`mailto:${site.email}`} variant="big">
+          Email me
+        </Button>
         {site.socials
           .filter((social) => social.primary)
           .map((social) => (
