@@ -425,6 +425,91 @@ const collectStyles = () => {
     }
   }
 
+  /*
+   * Tap targets (WCAG 2.2 §2.5.8).
+   *
+   * This is the assertion that catches the class of bug where a control's
+   * padding is expressed in rem: it looks fine at 1440px and collapses on a
+   * phone, because rem shrinks with the fluid ladder. Only flagged below
+   * 670px, since that is where a finger is the input device.
+   *
+   * §2.5.8 exempts targets inline within a sentence, so links whose parent
+   * holds surrounding text are skipped, as is the visually-hidden skip link
+   * (it is full size once focused).
+   */
+  const smallTargets = []
+  for (const element of document.querySelectorAll('a, button, label, input')) {
+    const style = getComputedStyle(element)
+    if (style.display === 'none' || style.visibility === 'hidden') continue
+
+    const box = element.getBoundingClientRect()
+    if (box.height === 0 || box.width === 0) continue
+    if (element.closest('.visually-hidden, .skip-link')) continue
+
+    // Inline-in-a-sentence exemption: the parent carries its own text
+    // alongside this link.
+    const parent = element.parentElement
+    const inSentence =
+      parent &&
+      Array.from(parent.childNodes).some(
+        (node) => node.nodeType === 3 && node.textContent.trim().length > 0,
+      )
+    if (inSentence) continue
+
+    if (box.height < 24 || box.width < 24) {
+      smallTargets.push({
+        selector: cssPath(element),
+        text: (element.textContent || element.className || '').trim().slice(0, 30),
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+      })
+    }
+  }
+
+  /*
+   * Text measures that have collapsed.
+   *
+   * A paragraph capped in rem holds a constant pixel width while its column
+   * grows and shrinks, so on a phone it can end up far narrower than the band
+   * containing it. Flag any text block using well under the width available to
+   * it, which is what that bug looks like from the outside.
+   */
+  const narrowText = []
+  for (const element of document.querySelectorAll('p, li, dd, dt, blockquote, div')) {
+    const style = getComputedStyle(element)
+    if (style.display === 'none' || style.visibility === 'hidden') continue
+    if (style.maxWidth === 'none') continue
+    if (!element.textContent.trim()) continue
+    // Only measure blocks whose width the cap actually governs.
+    if (!/^(block|flow-root)$/.test(style.display)) continue
+    // Centred blocks (auto margins) are meant to sit inside their column.
+    if (style.marginLeft === style.marginRight && style.marginLeft !== '0px') {
+      continue
+    }
+
+    const box = element.getBoundingClientRect()
+    const available = element.parentElement?.getBoundingClientRect().width ?? 0
+    if (box.width === 0 || available === 0) continue
+
+    const ratio = box.width / available
+    /*
+     * 0.8 rather than something stricter: a grid cell or a deliberately
+     * short measure can legitimately sit inside its container, and this
+     * should not fire on those. But below 80% of an already-narrow phone
+     * column, a paragraph reads as a mistake rather than a choice — the
+     * original 80rem callout landed at exactly 75% here.
+     */
+    if (ratio < 0.8) {
+      narrowText.push({
+        selector: cssPath(element),
+        maxWidth: style.maxWidth,
+        width: Math.round(box.width),
+        available: Math.round(available),
+        ratio: Math.round(ratio * 100),
+      })
+    }
+  }
+
   return {
     rootFontSize: parseFloat(getComputedStyle(document.documentElement).fontSize),
     bodyFontSize: parseFloat(getComputedStyle(document.body).fontSize),
@@ -433,6 +518,8 @@ const collectStyles = () => {
     innerWidth: window.innerWidth,
     clientWidth: viewportWidth,
     overflowing,
+    smallTargets,
+    narrowText,
     navbarPosition: navbar ? getComputedStyle(navbar).position : null,
     elements: results,
   }
@@ -601,6 +688,34 @@ const main = async () => {
         /* -- 3. navbar is fixed -------------------------------------- */
         if (data.navbarPosition !== 'fixed') {
           fail(`${label}: #navbar position is ${data.navbarPosition}, expected fixed`)
+        }
+
+        /* -- 3b. tap targets, phones only ---------------------------- */
+        if (viewport.width < 670 && data.smallTargets.length > 0) {
+          for (const target of data.smallTargets) {
+            fail(
+              `${label}: tap target ${target.width}x${target.height}px is under ` +
+                `24x24 (WCAG 2.2 §2.5.8) — “${target.text}”\n` +
+                `      ${target.selector}`,
+            )
+          }
+        }
+
+        /* -- 3c. text measures must not collapse --------------------- *
+         * A max-width in rem shrinks with the fluid ladder, so a measure
+         * tuned at 1440px can leave a paragraph occupying a third of its
+         * band on a phone. That is invisible to a contrast or overflow
+         * check but obvious to a reader, so assert it directly.
+         */
+        if (viewport.width < 670) {
+          for (const box of data.narrowText) {
+            fail(
+              `${label}: text block is ${box.width}px inside a ${box.available}px ` +
+                `column (${box.ratio}% — max-width “${box.maxWidth}” is likely ` +
+                'in rem and collapsing on small viewports)\n' +
+                `      ${box.selector}`,
+            )
+          }
         }
 
         /* -- 4. contrast, from the browser's own resolved colours ---- */
@@ -824,6 +939,41 @@ const main = async () => {
             }
             if (!menu.linkVisible) {
               fail(`${label}: mobile menu is open but its links have zero size`)
+            }
+
+            /*
+             * The panel must be comfortably wider than its widest link.
+             *
+             * This catches the rem-vs-em bug specifically: `min-width: 22rem`
+             * is 220px at desktop but 78px at 390px, which left "Contact"
+             * filling 76% of the panel — a narrow strip, with everything
+             * technically fitting so no overflow check could see it. Requiring
+             * 2em of slack ties the panel's breathing room to its own type
+             * size, which is the property that was wrong.
+             */
+            const roomy = await page.evaluate(() => {
+              const panel = document.querySelector('.whopper-panel')
+              const fontSize = parseFloat(getComputedStyle(panel).fontSize)
+              const widest = Math.max(
+                ...Array.from(panel.querySelectorAll('a')).map(
+                  (a) => a.getBoundingClientRect().width,
+                ),
+              )
+              return {
+                clientWidth: panel.clientWidth,
+                widest: Math.round(widest),
+                needed: Math.round(widest + 2 * fontSize),
+                fontSize: Math.round(fontSize * 10) / 10,
+              }
+            })
+
+            if (roomy.clientWidth < roomy.needed) {
+              fail(
+                `${label}: mobile menu panel is only ${roomy.clientWidth}px wide ` +
+                  `for a ${roomy.widest}px widest link at ${roomy.fontSize}px type ` +
+                  `(wants >=${roomy.needed}px). A min-width in rem shrinks with ` +
+                  'the fluid ladder; use em so it tracks the type size.',
+              )
             }
 
             await page.screenshot({
