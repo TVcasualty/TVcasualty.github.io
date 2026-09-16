@@ -1,0 +1,49 @@
+import { css } from '../../styled-system/css'
+import { Layout } from '../components/Layout'
+import { ColorSection } from '../components/ColorSection'
+import { Button } from '../components/Button'
+
+const inner = css({
+  minHeight: '60vh',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  textAlign: 'center',
+  paddingTop: '10rem',
+})
+
+const code = css({
+  fontSize: '4em',
+  fontWeight: 'black',
+  lineHeight: '1',
+  letterSpacing: '-0.03em',
+  color: 'accent',
+  margin: '0 0 1rem 0',
+})
+
+const lede = css({
+  fontSize: '1.3em',
+  fontWeight: 'bold',
+  maxWidth: '70rem',
+})
+
+/**
+ * Rendered to dist/404.html, which is the only path GitHub Pages serves for an
+ * unmatched URL (BRIEF §4). build.ts special-cases it for that reason.
+ */
+export const NotFound = () => (
+  <Layout title="Page not found" path="/404.html" noindex>
+    <ColorSection color="gray" as="header" class={inner}>
+      <p class={code}>404</p>
+      <h1>Nothing here</h1>
+      <p class={lede}>
+        That URL does not exist. It may have been part of the old version of
+        this site.
+      </p>
+      <Button href="/" variant="big">
+        Back to the homepage
+      </Button>
+    </ColorSection>
+  </Layout>
+)
