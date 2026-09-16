@@ -24,13 +24,6 @@ const list = css({
   fontSize: '0.9em',
 })
 
-const wordmark = css({
-  fontSize: '1.4em',
-  fontWeight: 'black',
-  letterSpacing: '-0.02em',
-  margin: '0 0 0.5rem 0',
-})
-
 /* See the note on text measures in Home.tsx: a rem cap would collapse this to
    ~135px on a phone, wrapping the tagline over six lines inside a 376px
    column. `ch` keeps the measure constant in characters. */
@@ -59,7 +52,6 @@ export const Footer = () => (
   <div>
     <div class={inner}>
       <div>
-        <p class={wordmark}>{site.name}</p>
         <p class={blurb}>{site.tagline}</p>
       </div>
 
@@ -84,15 +76,12 @@ export const Footer = () => (
               </a>
             </li>
           ))}
-          <li>
-            <a href={`mailto:${site.email}`}>Email</a>
-          </li>
         </ul>
       </div>
     </div>
 
     <p class={legal}>
-      © {new Date().getFullYear()} {site.name}. Built by hand, no drama.{' '}
+      © {new Date().getFullYear()}. Built by hand, no drama.{' '}
       <a href={site.repo} target="_blank" rel="noopener noreferrer">
         Source on GitHub
       </a>{' '}

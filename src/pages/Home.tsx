@@ -23,6 +23,19 @@ const heroRole = css({
   margin: '0 0 2rem 0',
 })
 
+/* The hero's <h1> overrides the global 1.8em, which is smaller than the 2em
+   lede directly beneath it — the heading was losing to its own subtitle. This
+   is scoped to the hero rather than raised globally because h1 is also
+   NotFound.tsx's "Nothing here", which is sized correctly for that page.
+
+   3em keeps a clear step above the lede at every width while still wrapping to
+   three lines at 390px, where a larger value starts crowding the viewport. */
+const heroHeading = css({
+  fontSize: '3em',
+  lineHeight: '0.95',
+  margin: '0 0 0.35em 0',
+})
+
 /* The hero lede: 2em / 700 / 1.1 over a 110rem measure, per BRIEF §3.6. That
    110rem is the same number as the fluid root-size divisor, so below 1100px it
    tracks the viewport exactly. */
@@ -72,16 +85,6 @@ const contactGrid = css({
   '& div.button': { margin: '0' },
 })
 
-/* The hero CTA is the flat `big` pill, same visual language as every other
-   button on the page. It only needs to be a little larger than a body-copy
-   button to hold its own against a 2em lede, so this is a size bump and
-   nothing else — deliberately no gradient or shadow stack. The hero's former
-   plastic-button treatment was removed on purpose; see git history before
-   reinstating it. */
-const heroCta = css({
-  fontSize: '1.4em',
-})
-
 /**
  * The single-page home route.
  *
@@ -91,14 +94,11 @@ const heroCta = css({
  */
 export const Home = () => (
   <Layout path="/">
-    {/* Hero. Carries the page's only <h1> and the primary CTA. */}
+    {/* Hero. Carries the page's only <h1>. */}
     <ColorSection color="gray" as="header" id="hero" class={heroInner}>
       <p class={heroRole}>{site.role}</p>
-      <h1>{site.name}</h1>
+      <h1 class={heroHeading}>a chill dev for a not so chill project</h1>
       <p class={heroLede}>{site.tagline}</p>
-      <Button href="#work" variant="big" class={heroCta}>
-        See my work
-      </Button>
     </ColorSection>
 
     <ColorSection color="yellow" id="work" eyebrow="How it goes" heading="Work">
@@ -137,9 +137,6 @@ export const Home = () => (
     <ColorSection color="purple" id="contact" eyebrow="Say something" heading="Contact">
       <p class={callout}>{contact}</p>
       <div class={contactGrid}>
-        <Button href={`mailto:${site.email}`} variant="big">
-          Email me
-        </Button>
         {site.socials
           .filter((social) => social.primary)
           .map((social) => (

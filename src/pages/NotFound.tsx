@@ -3,8 +3,16 @@ import { Layout } from '../components/Layout'
 import { ColorSection } from '../components/ColorSection'
 import { Button } from '../components/Button'
 
+/* The full-viewport band floor now comes from `.colorsection` in global.ts,
+   but only at 670px and up, so this keeps a mobile-only floor of its own.
+
+   Without it this page has just two short bands and stops ~200px short of a
+   phone viewport, leaving bare page background under the footer. Scoped to
+   `mdDown` so it never competes with the global 100dvh floor above 670px —
+   the two rules have equal specificity, and this one would win on source
+   order and hold the band at 60vh on desktop. */
 const inner = css({
-  minHeight: '60vh',
+  mdDown: { minHeight: '60vh' },
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',

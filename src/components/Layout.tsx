@@ -36,7 +36,7 @@ export const Layout = ({
   noindex,
   children,
 }: LayoutProps) => {
-  const fullTitle = title ? `${title} — ${site.name}` : site.title
+  const fullTitle = title ? `${title} — ${site.title}` : site.title
   const canonical = `${site.url}${path}`
   const ogImage = `${site.url}${site.ogImage.src}`
 
@@ -51,12 +51,10 @@ export const Layout = ({
           <meta name="description" content={description} />
           <link rel="canonical" href={canonical} />
           {noindex ? <meta name="robots" content="noindex, follow" /> : null}
-          <meta name="author" content={site.name} />
           <meta name="theme-color" content={site.themeColor} />
 
           {/* Open Graph */}
           <meta property="og:type" content="website" />
-          <meta property="og:site_name" content={site.name} />
           <meta property="og:title" content={fullTitle} />
           <meta property="og:description" content={description} />
           <meta property="og:url" content={canonical} />

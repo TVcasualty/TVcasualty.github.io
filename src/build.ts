@@ -84,8 +84,8 @@ Sitemap: ${site.url}/sitemap.xml
 await fs.writeFile(path.join(DIST, 'robots.txt'), robots)
 
 const manifest = {
-  name: site.name,
-  short_name: site.name,
+  name: site.title,
+  short_name: site.title,
   description: site.tagline,
   start_url: '/',
   display: 'standalone',

@@ -79,6 +79,26 @@ export const globalCss = defineGlobalStyles({
   },
   '@media screen and (min-width: 670px)': {
     body: { fontSize: '2.85rem' },
+    /* Desktop navbar clearance for the hero. Declared here rather than in a
+       second @media block, since a duplicate key would silently drop one of
+       them; see the note on #hero's paddingTop. */
+    '#hero': { paddingTop: '14rem' },
+    /* Every band is at least one viewport tall from tablet up (owner's call),
+       including the hero and the footer — no band is special-cased. This is a
+       floor, not a fixed height: Work's cards and Stack's spec sheet can exceed
+       one viewport, and `height` would either clip them or nest a scrollbar.
+
+       Gated at 670px because on a phone the same floor stranded short bands in
+       a screenful of empty colour. Below this width bands size to content.
+
+       100vh comes first as the fallback for engines without `dvh`, which fail
+       to parse the second declaration and keep the first. The nested `&`
+       re-emits the selector as a second rule, since Panda's object model
+       cannot hold two `min-height` keys and an array value emits invalid CSS. */
+    '.colorsection': {
+      minHeight: '100vh',
+      '&': { minHeight: '100dvh' },
+    },
   },
   '@media screen and (min-width: 1100px)': {
     html: { fontSize: '10px' },
@@ -260,9 +280,22 @@ export const globalCss = defineGlobalStyles({
    * panda.config.ts, driven by each band's data-color attribute. Only the
    * shared box model lives here.
    * ------------------------------------------------------------------ */
+  /* The band floor lives in the 670px block below, not here: at phone widths a
+     one-viewport minimum left short bands (Writing, Contact, the footer) with
+     large empty gaps, so below 670px bands size to their own content.
+
+     `justify-content: center` is unconditional and does nothing on mobile,
+     where the box height equals the content height. It only takes effect once
+     the floor applies and the box is taller than what is in it — otherwise
+     every short band would stack its copy at the top and dump the slack at the
+     bottom. Centring is safe against the usual flexbox trap: min-height means
+     the box grows to fit content, so content never overflows its container. */
   '.colorsection': {
     position: 'relative',
     width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
     padding: '6rem 2rem 8rem 2rem',
     backgroundColor: 'pageBg',
     color: 'text',
@@ -270,30 +303,25 @@ export const globalCss = defineGlobalStyles({
   '.colorsection > .band-inner': {
     maxWidth: '110rem',
     margin: '0 auto',
+    width: '100%',
   },
 
-  /* The radial glow behind the hero (BRIEF §3.8). Sits on a negative
-     z-index so it washes the band background without touching content. */
+  /* The hero is not special-cased: it takes the same band floor as everything
+     else (above 670px only), rather than the 80vh it used to carry.
+
+     paddingTop is navbar clearance, and it is asymmetric on purpose. The bar
+     is fixed, so it covers the top of this band: centring the content in the
+     full box would sit it visually low, since the top of that box is hidden.
+     Making paddingTop = paddingBottom + navbar-height centres the content in
+     the part of the band you can actually see.
+
+     Measured navbar heights are ~33px below 670px and ~68px above it, and the
+     bar scales with the fluid rem ladder while a px value does not — hence the
+     px floor for phones (28px bottom padding + 33px bar ≈ 64px) and the rem
+     value for desktop (80px + 68px ≈ 148px, which is what 14rem already was). */
   '#hero': {
-    minHeight: '80vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    paddingTop: '14rem',
+    paddingTop: '64px',
     isolation: 'isolate',
-  },
-  '#hero::before': {
-    content: '""',
-    position: 'absolute',
-    width: '110rem',
-    height: '110rem',
-    top: '-10rem',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: '-1',
-    backgroundImage:
-      'radial-gradient(rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0) 50%, transparent 100%)',
-    pointerEvents: 'none',
   },
 
   /* ------------------------------------------------------------------ *

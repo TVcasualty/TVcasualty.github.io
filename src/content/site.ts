@@ -28,7 +28,7 @@ export const site = {
 
   /* Used in <title> and the OG title, so it stays a plain job title: a search
      result or a shared link has no room for a joke to land in. */
-  title: 'Jorge Casal — Software Developer',
+  title: 'Software Developer',
 
   /* The single most visible piece of copy on the site: hero lede, meta
      description and social card text, all from this one string.
@@ -46,18 +46,7 @@ export const site = {
   locale: 'en',
   themeColor: '#ffc833',
 
-  email: 'casaldelacruz@gmail.com',
-
-  /* Both GitHub accounts are real. TVcasualty owns this repo, so it is the one
-     featured in the nav and contact band, with jorgecasal listed in the footer
-     as "GitHub (legacy)".
-
-     TODO(owner): decide whether you want two GitHub links on the page at all.
-     Featuring TVcasualty is a mechanical consequence of it owning this repo,
-     not a judgement about which account better represents you — jorgecasal is
-     the one that carries your name. If you would rather lead with jorgecasal,
-     swap the two here and in `socials`; if the older account is not worth
-     showing, drop the "GitHub (legacy)" entry entirely. */
+  /** The account that owns this repo, and the only GitHub link on the page. */
   github: 'https://github.com/TVcasualty',
 
   /** This site's own repository, linked from the footer. */
@@ -65,9 +54,7 @@ export const site = {
 
   socials: [
     { label: 'GitHub', href: 'https://github.com/TVcasualty', primary: true },
-    { label: 'LinkedIn', href: 'https://linkedin.com/in/casaljorge', primary: true },
-    { label: 'CodePen', href: 'https://codepen.io/jorgecasal' },
-    { label: 'GitHub (legacy)', href: 'https://github.com/jorgecasal' },
+    { label: 'LinkedIn', href: 'https://se.linkedin.com/in/casaljorge', primary: true },
   ] satisfies SocialLink[],
 
   nav: [
@@ -85,7 +72,7 @@ export const site = {
     height: 630,
     /* Describes the image for someone who cannot see it, so it stays literal
        even though `role` does not. */
-    alt: 'Jorge Casal — Software Developer',
+    alt: 'Software Developer',
   },
 } as const
 
