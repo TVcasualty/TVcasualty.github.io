@@ -24,17 +24,22 @@ export const projects: Project[] = [
     slug: 'weather-api',
     title: 'Weather API',
     stack: 'Express · REST · Geolocation',
-    /* TODO(owner): replace with a sentence on what you actually built and what
-       was interesting about it — the trade-off, the constraint, the bug. */
+    /* Describes what the deployed app does, observed from the outside: it ships
+       as "JC Weather", with a location search box and a current-conditions
+       readout in °C.
+       TODO(owner): worth one more sentence on what was actually interesting to
+       build — the trade-off, the constraint, or the bug that took longest. That
+       is the part a reader remembers, and only you know it. */
     summary:
-      'A small REST service that turns a browser geolocation fix into a current-conditions forecast, with a thin front end over the top.',
+      'A weather front end over a REST service: search a location, or let the browser supply one, and get current conditions back.',
     live: 'https://geolocationweatherapi.netlify.app',
   },
   {
     slug: 'simplest-todo',
     title: 'Simplest ToDo',
     stack: 'HTML · CSS · Vanilla JS',
-    /* TODO(owner): replace with your own description. */
+    /* Verified against the deployed app ("toDo Bud"): add items, clear the
+       list, no framework and no build step. */
     summary:
       'A deliberately dependency-free task list: no framework, no build step, state persisted straight to local storage.',
     live: 'https://simplest-todo.netlify.app',
@@ -43,9 +48,10 @@ export const projects: Project[] = [
     slug: 'code-repo',
     title: 'Code Repo',
     stack: 'Notes · Snippets · Writing',
-    /* TODO(owner): replace with your own description. */
+    /* Verified against the deployed site: short JS posts on higher-order
+       functions, classes, objects, Express and React. */
     summary:
-      'A running notebook of snippets and short write-ups I keep as I learn things worth remembering.',
+      'A notebook of short JavaScript write-ups — higher-order functions, classes, objects, a little Express and React — kept as I work things out.',
     live: 'https://code-repo.netlify.app',
   },
 ]

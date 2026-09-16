@@ -26,9 +26,15 @@ export const site = {
   /** Used in <title> and the OG title. */
   title: 'Jorge Casal — Software Developer',
 
-  /* TODO(owner): replace with your own one-line description. This is the
-     single most visible piece of copy on the site: it is the hero lede, the
-     meta description and the social card text. */
+  /* This is the single most visible piece of copy on the site: it is the hero
+     lede, the meta description and the social card text.
+
+     TODO(owner): this describes what the repos and the old site show you doing,
+     not necessarily how you want to be introduced. Two things only you can
+     decide: whether "Full-stack" is the framing you want (the evidence is
+     stronger on the front end), and whether to name TypeScript/React/Node at
+     all — naming them reads as concrete but dates the page and narrows what
+     people think to approach you about. */
   tagline:
     'Full-stack developer building fast, accessible web applications with TypeScript, React and Node.',
 
@@ -40,10 +46,16 @@ export const site = {
 
   email: 'casaldelacruz@gmail.com',
 
-  /* Both GitHub accounts are real. TVcasualty owns this repo, so it is the
-     one featured in the nav and contact band.
-     TODO(owner): BRIEF §5 flags this — confirm which account you want to
-     feature, and drop the other from `socials` if it should not be listed. */
+  /* Both GitHub accounts are real. TVcasualty owns this repo, so it is the one
+     featured in the nav and contact band, with jorgecasal listed in the footer
+     as "GitHub (legacy)".
+
+     TODO(owner): decide whether you want two GitHub links on the page at all.
+     Featuring TVcasualty is a mechanical consequence of it owning this repo,
+     not a judgement about which account better represents you — jorgecasal is
+     the one that carries your name. If you would rather lead with jorgecasal,
+     swap the two here and in `socials`; if the older account is not worth
+     showing, drop the "GitHub (legacy)" entry entirely. */
   github: 'https://github.com/TVcasualty',
 
   /** This site's own repository, linked from the footer. */
