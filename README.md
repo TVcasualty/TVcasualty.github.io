@@ -55,6 +55,13 @@ after touching `src/styles/theme/colors.ts`.
 overflow, the fixed navbar's band mirroring and the CSS-only mobile menu, and
 writes full-page screenshots to `.screenshots/` (gitignored).
 
+The footer's cross-origin embed gets an extra `*-footer.png` per page/width, and
+those are the images to trust for it. Playwright's full-page capture cannot
+composite an out-of-process iframe that sits outside the viewport, so the embed
+reads as an empty box in the `index-*.png` / `404-*.png` shots no matter how
+long it is given to load. The `-footer.png` element captures are taken with the
+frame on-screen and loaded, so they show its real rendered content.
+
 Its value is that it is a *second opinion*. `check-contrast.py` reimplements the
 cascade to resolve colours and sizes; this script asks Chromium the same
 questions via `getComputedStyle` and diffs the two answers, so a bug in either

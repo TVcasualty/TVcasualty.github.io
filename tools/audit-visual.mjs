@@ -27,6 +27,9 @@
  *   4. the navbar is fixed and its data-color tracks the band beneath it.
  *
  * Screenshots go to .screenshots/ (gitignored — binaries are not committed).
+ * The `-footer` images are the ones to trust for the footer's cross-origin
+ * embed; see the note in the screenshots step for why the fullPage shots cannot
+ * show it.
  */
 
 import { spawn } from 'node:child_process'
@@ -111,6 +114,52 @@ const importPlaywright = async () => {
   }
   // Last resort: a normal resolution, in case it is genuinely installed.
   return import('playwright')
+}
+
+/**
+ * Scroll the footer's cross-origin iframe into view and wait for it to load.
+ *
+ * The footer embed is `loading="lazy"`, so a page that is only ever observed at
+ * scrollY=0 never triggers the load at all: the frame stays empty and any
+ * screenshot of it records a blank box that looks like a broken embed.
+ *
+ * This polls for real readiness rather than sleeping a fixed number of seconds.
+ * `contentFrame()` returns non-null well before the document is usable, and
+ * `readyState === 'complete'` can be reached with an empty body, so the poll
+ * requires both a complete document and some rendered text before declaring the
+ * frame ready. In practice this settles in ~1.5s; the 5s budget is only there so
+ * an offline or slow-responding misfitscentral.com cannot hang the audit.
+ *
+ * Returns a status object; the caller decides whether a timeout is fatal.
+ */
+const FRAME_BUDGET_MS = 5000
+
+const settleFooterFrame = async (page, budgetMs = FRAME_BUDGET_MS) => {
+  const handle = await page.$('iframe')
+  if (!handle) return { found: false, ready: false }
+
+  await handle.scrollIntoViewIfNeeded()
+
+  const deadline = Date.now() + budgetMs
+  let last = null
+  while (Date.now() < deadline) {
+    const frame = await handle.contentFrame()
+    if (frame) {
+      // A cross-origin frame that is mid-navigation throws on evaluate; that is
+      // a "not ready yet" signal, not an error worth reporting.
+      last = await frame
+        .evaluate(() => ({
+          state: document.readyState,
+          textLength: document.body?.innerText.trim().length ?? 0,
+        }))
+        .catch(() => null)
+      if (last && last.state === 'complete' && last.textLength > 0) {
+        return { found: true, ready: true, ...last }
+      }
+    }
+    await page.waitForTimeout(100)
+  }
+  return { found: true, ready: false, ...(last ?? {}) }
 }
 
 /* ------------------------------------------------------------------ *
@@ -888,9 +937,65 @@ const main = async () => {
         }
 
         /* -- 7. screenshots ----------------------------------------- */
+
+        /*
+         * The footer embed needs its own capture, and the reason is not obvious.
+         *
+         * Loading the frame first is necessary but NOT sufficient for the
+         * fullPage shot below. A cross-origin iframe is site-isolated (an
+         * OOPIF, composited by a separate process), and Playwright's fullPage
+         * capture uses captureBeyondViewport, which does not composite OOPIF
+         * content lying outside the real viewport. Verified directly: with the
+         * frame fully loaded (readyState complete, 1445 chars of text), the
+         * fullPage shot still renders it as an empty box. Launching with
+         * --disable-features=IsolateOrigins,site-per-process does not help
+         * either, so this is a capture-path limitation, not just process
+         * placement.
+         *
+         * Rejected alternatives, each tried and rendered:
+         *   - resize the viewport to the document height, so nothing is "beyond
+         *     viewport": composites the frame, but inflates the vh-sized hero
+         *     and pushes the footer out of the image entirely.
+         *   - take the fullPage shot while scrolled to the footer: composites
+         *     the frame, but the position:fixed navbar bakes in at its scrolled
+         *     offset — a duplicate bar above the footer and none at the top.
+         *
+         * So the fullPage shots keep their honest full-page geometry, and the
+         * footer band gets an element screenshot taken with the frame on-screen.
+         * That is the image to look at when checking the embed.
+         */
+        const frameStatus = await settleFooterFrame(page)
+        if (!frameStatus.found) {
+          fail(`${label}: no <iframe> found — the footer embed is missing`)
+        } else if (!frameStatus.ready) {
+          // Not a failure of the site: most likely no network access to the
+          // embedded origin. Flagged so a blank footer shot is never mistaken
+          // for a real defect.
+          notes.push(
+            `${label}: footer iframe did not finish loading within ` +
+              `${FRAME_BUDGET_MS}ms (readyState=${frameStatus.state ?? 'unknown'} ` +
+              `text=${frameStatus.textLength ?? 0} chars). The footer screenshot ` +
+              'will look empty; check network access to the embedded origin.',
+          )
+        }
+
+        const base = pageName.replace(/\.html$/, '')
+
+        if (frameStatus.found) {
+          const band = await page.$('iframe')
+          const footer = await band.evaluateHandle((el) =>
+            el.closest('.colorsection'),
+          )
+          const footerEl = footer.asElement()
+          if (footerEl) {
+            await footerEl.screenshot({
+              path: join(SHOTS, `${base}-${viewport.width}-footer.png`),
+            })
+          }
+        }
+
         await page.evaluate(() => window.scrollTo(0, 0))
         await page.waitForTimeout(120)
-        const base = pageName.replace(/\.html$/, '')
         await page.screenshot({
           path: join(SHOTS, `${base}-${viewport.width}.png`),
           fullPage: true,
