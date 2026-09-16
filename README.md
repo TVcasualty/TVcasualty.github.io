@@ -92,12 +92,11 @@ after touching `src/styles/`.
 ## Editing content
 
 **All copy lives in `src/content/`.** Components contain no prose, so text
-changes never require touching markup. The one remaining `TODO(owner)` is a
-question about identity, not copy: which of the two GitHub accounts should lead.
+changes never require touching markup.
 
 | File | Holds |
 | --- | --- |
-| `src/content/site.ts` | Name, role, tagline, URL, email, social links, nav items, OG defaults |
+| `src/content/site.ts` | Name, role, tagline, URL, social links, nav items, OG defaults |
 | `src/content/bands.ts` | Every band's copy: the Work cards, the About bio, the Stack spec sheet, the Writing and Contact callouts |
 
 Two rules apply to anything added to `bands.ts`, and they are why the page no
@@ -143,6 +142,17 @@ length in the site is in `rem`, so the entire layout scales proportionally with
 almost no per-component media queries. At desktop widths a `rem` reads as
 "pixels ÷ 10". The design has exactly three breakpoints: 240, 670 and 1100px.
 
+Two consequences of that, both of which have caused real bugs:
+
+- A length that must **not** scale with the ladder has to be in `px` — tap
+  targets and fixed-navbar clearance, for example. A `rem` value tuned at
+  1440px silently shrinks to a third of itself on a phone.
+- Inside `globalCss`, Panda's breakpoint conditions (`md:`) and array fallback
+  values do **not** resolve — `md:` is dropped and `['100vh', '100dvh']` emits
+  `0: 100vh; 1: 100dvh`. Use the raw `@media screen and (min-width: 670px)`
+  block that already exists there, and express a cascade fallback as a nested
+  `'&'`. Both work normally in `css()` calls in components.
+
 **Colour bands.** The page is a stack of full-bleed bands, each carrying
 `data-color`. Panda conditions turn that attribute into a rebinding of the
 `--colors-*` variables, so buttons, cards and text recolour automatically from
@@ -156,6 +166,30 @@ Colour choices are constrained by contrast, not taste: every band clears 4.5:1
 for text. Notably the gray band uses `darkGray` rather than the lighter
 `psdDarkGray` the brief specified, because the latter only reached 4.00:1
 against white and failed the hero's own lede.
+
+### Deviations from BRIEF.md
+
+`BRIEF.md` is the original design document and is deliberately not rewritten as
+the site evolves. Where the two disagree, this file is current:
+
+- **No hero radial glow** (BRIEF §3.8 / §3.9). The `#hero::before`
+  `radial-gradient` was removed; the gray band renders as a flat fill.
+- **No email anywhere** (BRIEF §2). There is no `mailto:` link and no
+  `site.email` field. Contact offers GitHub and LinkedIn only, which are also
+  the only two entries in the footer's "Elsewhere" column — CodePen and the
+  legacy `jorgecasal` GitHub link are gone, so the question of which GitHub
+  account to feature is settled.
+- **The owner's name appears only in the navbar.** The hero `<h1>` carries a
+  sentence rather than the name, and `<meta name="author">` / `og:site_name`
+  are not emitted.
+- **Bands are at least one viewport tall from 670px up**, centred vertically,
+  including the hero and the footer. Below 670px the floor is dropped and bands
+  size to their content: on a phone a one-viewport minimum stranded the short
+  bands (Writing, Contact, footer) in a screenful of empty colour. The floor is
+  `min-height`, never `height` — Work and Stack legitimately exceed it.
+- **The hero `<h1>` is sized locally** (`3em`) rather than by the global `1.8em`,
+  which was smaller than the `2em` lede beneath it. The global `h1` is
+  unchanged, because it also sets the 404's heading.
 
 ## Deployment
 

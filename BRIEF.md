@@ -258,7 +258,7 @@ The `:active` state shifts padding by `.05em` top/bottom so the label physically
 
 ### 3.8 Other patterns worth lifting
 
-- **Radial glow behind the hero**: `header::before` with `background-image: radial-gradient(rgba(255,255,255,.5) 0, rgba(255,255,255,0) 50%, transparent 100%)`, sized `110rem × 110rem`, `top: -10rem`, `left: 50%`, `transform: translateX(-50%)`, `z-index: -1`.
+- **Radial glow behind the hero**: `header::before` with `background-image: radial-gradient(rgba(255,255,255,.5) 0, rgba(255,255,255,0) 50%, transparent 100%)`, sized `110rem × 110rem`, `top: -10rem`, `left: 50%`, `transform: translateX(-50%)`, `z-index: -1`. **Superseded — built, then removed; the hero band is a flat fill. See "Deviations from BRIEF.md" in README.md.**
 - **Specs grid**: `#specs { display: grid; grid-template-columns: 1fr 1fr; max-width: 90rem; text-shadow: .1em .1em 0 var(--psd-darkest-gray) }`; each `.spec` is `display: inline-grid; grid-template-columns: 2fr 3fr` — right-aligned label, left-aligned `<ul>` of values. Collapses to `1fr` under 670px. Reuse for a skills / stack table.
 - **Card grid**: `grid-template-columns: 1fr 1fr 1fr; grid-gap: 1rem; max-width: 107rem`, collapsing to `1fr` under 670px. Reuse for project cards.
 - **Blob cluster** (`#clouds`): a `blockquote` with `border-radius: 50%` over ~10 absolutely-positioned `.cloudbit` circles sharing an `animation: blobble 5s infinite alternate ease-in-out` with staggered `animation-delay`. Gate the whole thing behind `@media (prefers-reduced-motion: no-preference)`. Nice-to-have.
@@ -392,7 +392,7 @@ Panda is good at utilities and tokens, poor at long literal declarations. Put th
 
 - The rem-scaling ladder (above).
 - The chunky CTA's four-layer `box-shadow` and its `:active` variant (§3.7).
-- The hero radial-glow `::before` (§3.8).
+- The hero radial-glow `::before` (§3.8). **Superseded — removed; see README.md.**
 - `.visually-hidden`, `:target { scroll-margin-top: 4em }`, `html, body { overflow-x: hidden }`.
 - The `@supports (color: color(display-p3 …))` wide-gamut palette overrides (§3.2) — Panda has no wide-gamut token primitive, so declare these as raw CSS overriding the generated `--colors-*` variables.
 
@@ -507,12 +507,17 @@ Then in **Settings → Pages**, switch *Source* from "Deploy from a branch" to *
 Real, verified facts to ship. Everything else is a clearly-marked placeholder living in `src/content/`.
 
 **Identity**
+
+*Superseded in part — the site now links GitHub and LinkedIn only, and shows no
+email. See "Deviations from BRIEF.md" in README.md. Retained here as the record
+of what was verified.*
+
 - Name: Jorge Casal
 - Role: Software Developer
-- GitHub: `github.com/TVcasualty` (primary), `github.com/jorgecasal` (legacy — verify which to feature)
-- LinkedIn: `linkedin.com/in/casaljorge`
-- CodePen: `codepen.io/jorgecasal`
-- Email: `casaldelacruz@gmail.com`
+- GitHub: `github.com/TVcasualty` (primary), `github.com/jorgecasal` (legacy — not linked)
+- LinkedIn: `se.linkedin.com/in/casaljorge`
+- CodePen: `codepen.io/jorgecasal` (not linked)
+- Email: `casaldelacruz@gmail.com` (not published)
 
 **Live and verified (200 OK)**
 - Blog — `code-repo.netlify.app`
