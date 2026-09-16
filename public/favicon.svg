@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Jorge Casal">
+  <rect width="100" height="100" rx="22" fill="#ffc833"/>
+  <g fill="none" stroke="#6c00ff" stroke-width="15">
+    <path d="M59 30V62"/>
+    <path d="M30 62A14.5 14.5 0 0 0 59 62"/>
+  </g>
+  <circle cx="59" cy="19" r="7.8" fill="#6c00ff"/>
+</svg>

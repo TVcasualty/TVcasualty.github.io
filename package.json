@@ -1,0 +1,25 @@
+{
+  "name": "tvcasualty.github.io",
+  "description": "Personal portfolio site for Jorge Casal. Bun + Hono JSX, pre-rendered to static HTML, styled with Panda CSS.",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/dev.ts",
+    "panda": "panda codegen",
+    "css": "panda cssgen --outfile public/styles/site.css",
+    "client": "bun build src/client/nav.ts --outfile public/scripts/nav.js --minify --target browser",
+    "build": "bun run panda && bun run css && bun run src/build.ts",
+    "preview": "bun run build && bunx serve dist",
+    "typecheck": "bunx tsc --noEmit",
+    "clean": "rm -rf dist styled-system public/styles/site.css"
+  },
+  "dependencies": {
+    "hono": "4.13.8"
+  },
+  "devDependencies": {
+    "@pandacss/dev": "1.12.1",
+    "@types/bun": "1.4.2",
+    "typescript": "5.9.3"
+  }
+}

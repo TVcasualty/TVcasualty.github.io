@@ -1,0 +1,520 @@
+import { defineGlobalStyles } from '@pandacss/dev'
+
+/**
+ * Hand-written global CSS.
+ *
+ * Everything here is in this file for one of the reasons BRIEF §3.9 gives:
+ * it is a long literal declaration that Panda's `css()` would only obscure
+ * (the four-layer button shadows, the radial glow), it targets bare elements
+ * or stateful sibling selectors (typography defaults, the CSS-only menu), or
+ * it overrides Panda's own generated variables (the wide-gamut palette).
+ *
+ * Component-level layout and spacing lives in `css()` calls instead.
+ * Token references such as `color: 'text'` are resolved by Panda, so these
+ * rules still recolour per colour band.
+ */
+export const globalCss = defineGlobalStyles({
+  /* ------------------------------------------------------------------ *
+   * Self-hosted typeface (BRIEF §2.7)
+   *
+   * One variable woff2, latin subset only, pulled from the Google Fonts
+   * API at build-setup time and committed to public/fonts. The
+   * unicode-range is verbatim from that stylesheet's `latin` block, so the
+   * browser skips the download entirely for non-latin text. There is no
+   * runtime request to Google.
+   * ------------------------------------------------------------------ */
+  '@font-face': {
+    fontFamily: 'Plus Jakarta Sans',
+    fontStyle: 'normal',
+    fontWeight: '300 800',
+    fontDisplay: 'swap',
+    src: "url('/fonts/PlusJakartaSans[wght].woff2') format('woff2')",
+    unicodeRange:
+      'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD',
+  },
+
+  /* ------------------------------------------------------------------ *
+   * The fluid root-font scaling ladder (BRIEF §3.1)
+   *
+   * Every length in the design is a rem, and the root font size is driven
+   * by viewport width, so the whole layout scales proportionally with
+   * almost no per-component media queries. At >= 1100px scaling stops and
+   * 1rem === 10px exactly, which is why every rem below reads as
+   * "pixels / 10".
+   *
+   * 0.909090909091vw is 100vw / 110 and is load-bearing: it is what makes
+   * a 110rem container exactly fill the viewport at the fluid sizes.
+   *
+   * Deliberately raw @media strings, not Panda breakpoint conditions —
+   * see the note in src/styles/theme/breakpoints.ts.
+   * ------------------------------------------------------------------ */
+  html: {
+    fontSize: '2.4px',
+    /* Overscroll at the very top and bottom of the page shows the colour of
+       the first and last band rather than white. Once nav.js starts
+       mirroring the active band onto <html>, the solid colour below takes
+       over — see the html[data-color] rule. */
+    backgroundColor: 'pageBg',
+    backgroundImage:
+      'linear-gradient(to bottom, {colors.psdDarkGray} 0 50%, {colors.darkestGray} 50% 100%)',
+    backgroundAttachment: 'fixed',
+  },
+  'html[data-color]': {
+    backgroundImage: 'none',
+  },
+  body: {
+    fontSize: '4rem',
+    fontFamily: 'body',
+    fontWeight: 'normal',
+    lineHeight: '1.3',
+    margin: '0',
+    backgroundColor: 'pageBg',
+    color: 'text',
+    WebkitFontSmoothing: 'antialiased',
+    textRendering: 'optimizeLegibility',
+  },
+  '@media screen and (min-width: 240px)': {
+    html: { fontSize: '0.909090909091vw' },
+    body: { fontSize: '3.85rem' },
+  },
+  '@media screen and (min-width: 670px)': {
+    body: { fontSize: '2.85rem' },
+  },
+  '@media screen and (min-width: 1100px)': {
+    html: { fontSize: '10px' },
+  },
+
+  /* Several decorative elements deliberately overflow the viewport
+     (BRIEF §3.8), so this is required, not defensive. */
+  'html, body': {
+    overflowX: 'hidden',
+  },
+
+  /* Deep links must clear the fixed navbar. scroll-snap-margin-top is the
+     pre-standard spelling, kept for Safari < 14.5 (BRIEF §3.4). */
+  ':target': {
+    scrollMarginTop: '4em',
+    scrollSnapMarginTop: '4em',
+  },
+
+  /* ------------------------------------------------------------------ *
+   * Typographic scale (BRIEF §3.6)
+   *
+   * Sizes are in em so they compound off the fluid body size. Note that
+   * <em> is rendered bold and upright: this design never italicises.
+   * ------------------------------------------------------------------ */
+  h1: {
+    fontSize: '1.8em',
+    fontWeight: 'black',
+    lineHeight: '1',
+    letterSpacing: '-0.02em',
+    margin: '0 0 0.5em 0',
+    textWrap: 'balance',
+  },
+  'section h2': {
+    fontSize: '2.4em',
+    fontWeight: 'black',
+    lineHeight: '1',
+    letterSpacing: '-0.02em',
+    margin: '6rem auto 3rem auto',
+    textWrap: 'balance',
+  },
+  h3: {
+    fontSize: '1.25em',
+    fontWeight: 'bold',
+    lineHeight: '1.1',
+    letterSpacing: '-0.0075em',
+    margin: '0 0 0.4em 0',
+    textWrap: 'balance',
+  },
+  h4: {
+    fontSize: '1em',
+    fontWeight: 'bold',
+    lineHeight: '1.2',
+    margin: '0 0 0.4em 0',
+  },
+  'section p': {
+    fontSize: '1em',
+    lineHeight: '1.3em',
+    margin: '0 0 1em 0',
+    textWrap: 'pretty',
+  },
+  a: {
+    color: 'inherit',
+    textDecoration: 'underline',
+    textDecorationThickness: '0.08em',
+    textUnderlineOffset: '0.16em',
+  },
+  'strong, em': {
+    fontWeight: 'bold',
+    fontStyle: 'normal',
+  },
+  'strong > em, em > strong': {
+    fontWeight: 'black',
+  },
+  'ul, ol': {
+    margin: '0',
+    padding: '0',
+    listStyle: 'none',
+  },
+  'img, svg': {
+    display: 'block',
+    maxWidth: '100%',
+    height: 'auto',
+  },
+  hr: {
+    border: '0',
+    borderTop: '0.2rem solid',
+    borderColor: 'subtler',
+    margin: '4rem 0',
+  },
+
+  /* Visible against every band, because `focusRing` is itself a per-band
+     semantic token (BRIEF §6). */
+  ':focus-visible': {
+    outlineWidth: '0.3rem',
+    outlineStyle: 'solid',
+    outlineColor: 'focusRing',
+    outlineOffset: '0.3rem',
+    borderRadius: '0.4rem',
+  },
+
+  '.visually-hidden': {
+    clipPath: 'inset(50%)',
+    height: '1px',
+    width: '1px',
+    overflow: 'hidden',
+    position: 'absolute',
+    whiteSpace: 'nowrap',
+    border: '0',
+    padding: '0',
+    margin: '-1px',
+  },
+
+  /* `nojs` starts on <body> and is removed by nav.js on boot, so anything
+     that genuinely needs script is hidden by default (BRIEF §3.8). */
+  '.nojs [data-js-only]': {
+    display: 'none',
+  },
+
+  /* ------------------------------------------------------------------ *
+   * Buttons (BRIEF §3.7)
+   *
+   * The padding is asymmetric on purpose: .25em top against .35em bottom
+   * optically centres a cap-height label inside a pill. Do not "tidy" it.
+   * ------------------------------------------------------------------ */
+  'div.button': {
+    display: 'inline-block',
+    width: 'fit-content',
+    borderRadius: '1em',
+    padding: '0.25em 0.7em 0.35em 0.7em',
+    margin: '2rem auto',
+    backgroundColor: 'buttonBg',
+    color: 'buttonText',
+    textAlign: 'center',
+    lineHeight: '1.15',
+  },
+  'div.button a': {
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    letterSpacing: '-0.0075em',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.4em',
+  },
+  'div.button.big': {
+    fontSize: '1.25em',
+  },
+  'div.button.center': {
+    display: 'block',
+  },
+
+  /* The chunky plastic CTA. The wrapper goes transparent and hands all the
+     rendering to the <a>, which carries the gradient and the shadow stack. */
+  'div.button.chunky': {
+    backgroundColor: 'transparent',
+    color: 'inherit',
+    padding: '0',
+    borderRadius: '3em',
+  },
+  /* Four layers, each doing a specific job — do not collapse them:
+       1  inset top highlight     — the lit upper lip of the plastic
+       2  inset bottom shade      — thickness under the lip
+       3  inset bottom underlight — light bouncing up inside the shell
+       4  outer cast shadow       — lifts the button off the page      */
+  'div.button.chunky a': {
+    display: 'inline-block',
+    fontSize: '1.78em',
+    fontWeight: 'bold',
+    padding: '0.1em 0.5em 0.3em 0.5em',
+    borderRadius: '3em',
+    textDecoration: 'none',
+    color: 'white',
+    backgroundImage: 'linear-gradient({colors.purple}, {colors.darkPurple})',
+    textShadow: '0 0.02em 0.04em rgba(0, 0, 0, 0.4)',
+    boxShadow:
+      'inset 0 0.05em 0.05em rgba(255, 255, 255, 0.6), inset 0 -0.05em 0.08em rgba(0, 0, 0, 0.5), inset 0 -0.01em 0.5em rgba(255, 255, 255, 0.3), 0 0.05em 0.1em rgba(0, 0, 0, 0.4)',
+    userSelect: 'none',
+  },
+  /* Padding shifts by .05em top and bottom so the label physically travels
+     downwards on press. That detail is most of the charm. */
+  'div.button.chunky a:active': {
+    padding: '0.15em 0.5em 0.25em 0.5em',
+    backgroundImage: 'linear-gradient({colors.darkPurple}, #7800ff)',
+    boxShadow:
+      'inset 0 0.05em 0.15em rgba(0, 0, 0, 0.5), inset 0 -0.03em 0.03em rgba(255, 255, 255, 0.6), 0 0.05em 0.2em rgba(0, 0, 0, 0.2)',
+  },
+
+  /* ------------------------------------------------------------------ *
+   * Colour bands
+   *
+   * The colour itself comes from the `band*` conditions in
+   * panda.config.ts, driven by each band's data-color attribute. Only the
+   * shared box model lives here.
+   * ------------------------------------------------------------------ */
+  '.colorsection': {
+    position: 'relative',
+    width: '100%',
+    padding: '6rem 2rem 8rem 2rem',
+    backgroundColor: 'pageBg',
+    color: 'text',
+  },
+  '.colorsection > .band-inner': {
+    maxWidth: '110rem',
+    margin: '0 auto',
+  },
+
+  /* The radial glow behind the hero (BRIEF §3.8). Sits on a negative
+     z-index so it washes the band background without touching content. */
+  '#hero': {
+    minHeight: '80vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    paddingTop: '14rem',
+    isolation: 'isolate',
+  },
+  '#hero::before': {
+    content: '""',
+    position: 'absolute',
+    width: '110rem',
+    height: '110rem',
+    top: '-10rem',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: '-1',
+    backgroundImage:
+      'radial-gradient(rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0) 50%, transparent 100%)',
+    pointerEvents: 'none',
+  },
+
+  /* ------------------------------------------------------------------ *
+   * Navbar (BRIEF §3.4)
+   *
+   * Fixed and transparent until nav.js adds `.scrolled`, at which point it
+   * takes the active band's own background and a hard rule underneath.
+   * nav.js also mirrors data-color onto #navbar, so the tokens below
+   * rebind to whichever band is under the bar.
+   * ------------------------------------------------------------------ */
+  '#navbar': {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    zIndex: '101010',
+    width: '100%',
+    backgroundColor: 'transparent',
+    borderBottom: '0.2rem solid transparent',
+    color: 'text',
+  },
+  '#navbar.scrolled': {
+    backgroundColor: 'pageBg',
+    borderBottomColor: 'text',
+  },
+  '#navbar .nav-inner': {
+    display: 'flex',
+    gap: '0.5em',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: '130rem',
+    margin: '0 auto',
+    padding: '1rem',
+    fontSize: '0.77em',
+  },
+  '#navbar li': {
+    fontWeight: 'bold',
+    letterSpacing: '-0.0075em',
+    borderRadius: '1em',
+  },
+  '#navbar a': {
+    textDecoration: 'none',
+    display: 'inline-block',
+    padding: '0.25em 0.5em 0.35em 0.5em',
+    borderRadius: '1em',
+    position: 'relative',
+  },
+  '#navbar .nav-brand a': {
+    fontWeight: 'black',
+    paddingLeft: '0.25em',
+  },
+  /* Hover affordance is a pseudo-element underline rather than
+     text-decoration, so it can be inset and animated independently. */
+  '#navbar a::after': {
+    content: '""',
+    position: 'absolute',
+    left: '0.5em',
+    right: '0.5em',
+    bottom: '0.2em',
+    height: '0.15em',
+    borderRadius: '0.1em',
+    backgroundColor: 'currentColor',
+    transform: 'scaleX(0)',
+    transformOrigin: 'left center',
+  },
+  '#navbar a:hover::after, #navbar a:focus-visible::after': {
+    transform: 'scaleX(1)',
+  },
+
+  /* The mobile menu is CSS-only: a checkbox drives it, so it works with
+     JavaScript disabled (BRIEF §6). The input is laid transparently over
+     its own label, which keeps it clickable, focusable and space-toggleable
+     without display:none breaking keyboard access. */
+  '#navbar .nav-menu': {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  '.whopper-input': {
+    position: 'absolute',
+    top: '0',
+    right: '0',
+    width: '3.6em',
+    height: '2.4em',
+    margin: '0',
+    opacity: '0',
+    cursor: 'pointer',
+    zIndex: '2',
+  },
+  '.whopper-label': {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: '0.45em',
+    width: '3.6em',
+    height: '2.4em',
+    padding: '0 0.7em',
+    borderRadius: '1em',
+    boxSizing: 'border-box',
+  },
+  '.whopper-bar': {
+    display: 'block',
+    height: '0.2em',
+    borderRadius: '0.1em',
+    backgroundColor: 'currentColor',
+  },
+  '.whopper-input:focus-visible + .whopper-label': {
+    outlineWidth: '0.3rem',
+    outlineStyle: 'solid',
+    outlineColor: 'focusRing',
+    outlineOffset: '0.3rem',
+  },
+  '.whopper-panel': {
+    position: 'absolute',
+    top: 'calc(100% + 1rem)',
+    right: '0',
+    minWidth: '22rem',
+    display: 'none',
+    padding: '1rem',
+    borderRadius: '1.5em',
+    border: '0.2rem solid',
+    borderColor: 'text',
+    backgroundColor: 'pageBg',
+    boxShadow: '0 0.4rem 1.2rem rgba(0, 0, 0, 0.25)',
+  },
+  '.whopper-input:checked ~ .whopper-panel': {
+    display: 'block',
+  },
+  '.whopper-panel ul': {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.2em',
+  },
+  '.whopper-panel a': {
+    display: 'block',
+  },
+
+  /* From 670px the menu is always open and inline, and the toggle is gone
+     for everyone including screen readers.
+
+     Note the media query is spelled `@media (min-width: 670px)` rather than
+     `@media screen and (min-width: 670px)`: these are object keys, so
+     reusing the exact string used by the scaling ladder above would
+     silently overwrite it. Same breakpoint, distinct key. */
+  '@media (min-width: 670px)': {
+    '.whopper-input, .whopper-label': {
+      display: 'none',
+    },
+    '.whopper-panel': {
+      display: 'block',
+      position: 'static',
+      minWidth: '0',
+      padding: '0',
+      border: '0',
+      borderRadius: '0',
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+    },
+    '.whopper-panel ul': {
+      flexDirection: 'row',
+      gap: '0.5em',
+    },
+  },
+
+  /* ------------------------------------------------------------------ *
+   * Motion — everything decorative is opt-in (BRIEF §6)
+   * ------------------------------------------------------------------ */
+  '@media (prefers-reduced-motion: no-preference)': {
+    html: {
+      scrollBehavior: 'smooth',
+    },
+    '#navbar': {
+      transitionProperty: 'background-color, border-color',
+      transitionDuration: '250ms',
+      transitionTimingFunction: 'ease-in-out',
+    },
+    'html, body': {
+      transitionProperty: 'background-color',
+      transitionDuration: '250ms',
+      transitionTimingFunction: 'ease-in-out',
+    },
+    '#navbar a::after': {
+      transitionProperty: 'transform',
+      transitionDuration: '150ms',
+      transitionTimingFunction: 'ease-out',
+    },
+    'div.button, div.button a': {
+      transitionProperty: 'background-color, box-shadow, transform, padding',
+      transitionDuration: '120ms',
+      transitionTimingFunction: 'ease-out',
+    },
+    '.blobble': {
+      animationName: 'blobble',
+      animationDuration: '5s',
+      animationIterationCount: 'infinite',
+      animationDirection: 'alternate',
+      animationTimingFunction: 'ease-in-out',
+    },
+  },
+
+  /* ------------------------------------------------------------------ *
+   * Wide-gamut palette — deliberately NOT here.
+   *
+   * BRIEF §3.9 suggests declaring the `@supports (color: color(display-p3 …))`
+   * overrides as raw CSS in this file. That is silently dead: Panda emits
+   * globalCss into `@layer base` but token variables into `@layer tokens`,
+   * which comes later in the cascade order and always wins.
+   *
+   * The wide-gamut values are therefore expressed as the `_p3` condition on
+   * the brand colour tokens instead, which lands them inside `@layer tokens`.
+   * See src/styles/theme/colors.ts.
+   * ------------------------------------------------------------------ */
+})
