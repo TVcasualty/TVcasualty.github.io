@@ -92,8 +92,7 @@ export const Footer = () => (
     </div>
 
     <p class={legal}>
-      © {new Date().getFullYear()} {site.name}. Built with Bun, Hono and Panda
-      CSS.{' '}
+      © {new Date().getFullYear()} {site.name}. Built by hand, no drama.{' '}
       <a href={site.repo} target="_blank" rel="noopener noreferrer">
         Source on GitHub
       </a>{' '}
