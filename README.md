@@ -36,6 +36,18 @@ regenerate CSS, so after editing anything under `src/styles/` or adding new
 | `bun run css` | Panda cssgen → `public/styles/site.css` |
 | `bun run clean` | Remove all generated output |
 
+There are also two standalone Python tools (standard library only, no
+dependencies):
+
+```sh
+python3 tools/check-contrast.py   # WCAG audit of every colour band
+python3 tools/make-icons.py       # regenerate the favicon set and OG card
+```
+
+`check-contrast.py` reads the built stylesheet, resolves each band's tokens back
+to hex, and exits non-zero if any text pairing drops below 4.5:1. Worth running
+after touching `src/styles/theme/colors.ts`.
+
 ## Editing content
 
 **All copy lives in `src/content/`.** Components contain no prose, so text
@@ -91,6 +103,11 @@ different bands. `src/client/nav.ts` mirrors the active band's `data-color` onto
 `<html>` and `#navbar`, which is how the navbar stays legible while scrolling.
 
 Typography deliberately never italicises: `<em>` renders bold and upright.
+
+Colour choices are constrained by contrast, not taste: every band clears 4.5:1
+for text. Notably the gray band uses `darkGray` rather than the lighter
+`psdDarkGray` the brief specified, because the latter only reached 4.00:1
+against white and failed the hero's own lede.
 
 ## Deployment
 
