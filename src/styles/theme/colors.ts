@@ -157,18 +157,47 @@ export const semanticColors = defineSemanticTokens.colors({
       _bandAquaLight: '{colors.aquaDark}',
     },
   },
-  /** The band's own accent, for eyebrows and marks. */
+  /**
+   * The band's own accent, for eyebrows, spec labels and small headings.
+   *
+   * Held to 4.5:1 across every band, not the 3:1 large-text exemption.
+   *
+   * The exemption only covers text at >=18.66px bold, and this token is used at
+   * wildly different sizes: the eyebrow is 0.9em nested inside a 2.4em
+   * `section h2`, so it renders 24px+ and does qualify — but the footer column
+   * headings (0.8em) render at 9.0px at 320px wide, and the spec-sheet labels
+   * (0.95em) at 10.6px. Those do not qualify at any width below 1100px.
+   *
+   * Only gray, darkgray and yellow carry small accent text *today*, so purple
+   * and aqua-light could technically keep a 3:1 colour. They are held to 4.5:1
+   * anyway: which bands host a small label is a function of page composition,
+   * and moving a footer or spec grid into another band should not silently
+   * introduce an accessibility failure. One rule per token is the safer
+   * invariant.
+   *
+   * `tools/check-contrast.py` derives the rendered px size of every element
+   * from the shipped HTML and the rem ladder, so it decides the threshold per
+   * element rather than trusting this comment.
+   *
+   * This is why yellow uses `darkPurple` rather than `purple` (4.40:1),
+   * aqua-light uses `screenBlack` rather than `purple` (3.15:1), and purple
+   * uses `lightGreen` rather than `brandYellow` (4.40:1).
+   */
   accent: {
     value: {
       base: '{colors.brandYellow}',
       _bandGray: '{colors.brandYellow}',
       _bandDarkgray: '{colors.brandYellow}',
-      _bandYellow: '{colors.purple}',
+      _bandYellow: '{colors.darkPurple}',
       _bandWhite: '{colors.purple}',
       _bandBlack: '{colors.brandYellow}',
-      _bandPurple: '{colors.brandYellow}',
-      _bandAqua: '{colors.lightGreen}',
-      _bandAquaLight: '{colors.purple}',
+      _bandPurple: '{colors.lightGreen}',
+      /* Pure white, so it still separates from this band's `subtle`
+         (lightestGray). Nothing with a hue clears 4.5:1 on aquaDark —
+         lightGreen, the natural choice, only reaches 4.17:1 — so this band
+         carries its accent by weight rather than colour. */
+      _bandAqua: '{colors.white}',
+      _bandAquaLight: '{colors.screenBlack}',
     },
   },
   /** Card surfaces sit slightly off the band background. */
