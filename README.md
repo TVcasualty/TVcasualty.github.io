@@ -48,6 +48,47 @@ python3 tools/make-icons.py       # regenerate the favicon set and OG card
 to hex, and exits non-zero if any text pairing drops below 4.5:1. Worth running
 after touching `src/styles/theme/colors.ts`.
 
+## Local visual audit
+
+`tools/audit-visual.mjs` re-checks the built site in a real browser: it serves
+`dist/` over HTTP, then asserts the rem ladder, per-element contrast, horizontal
+overflow, the fixed navbar's band mirroring and the CSS-only mobile menu, and
+writes full-page screenshots to `.screenshots/` (gitignored).
+
+Its value is that it is a *second opinion*. `check-contrast.py` reimplements the
+cascade to resolve colours and sizes; this script asks Chromium the same
+questions via `getComputedStyle` and diffs the two answers, so a bug in either
+one shows up as a disagreement instead of a confident pass.
+
+It needs Chromium, which is a **machine-level prerequisite, not a project
+dependency**. Playwright is deliberately absent from `package.json` and
+`bun.lock`, so install it once in a scratch directory outside this repo:
+
+```sh
+mkdir -p ~/.cache/playwright-audit && cd ~/.cache/playwright-audit
+npm init -y && npm i -D playwright@1.63.0
+npx playwright install chromium
+```
+
+Then, from the repo:
+
+```sh
+bun run build
+node tools/audit-visual.mjs
+```
+
+The script finds that install by path. Set `PLAYWRIGHT_DIR` if you put it
+somewhere else. Expect harmless D-Bus noise on stderr
+(`org.freedesktop.NetworkManager … ServiceUnknown`) on machines without
+NetworkManager; append `2>/dev/null` to silence it.
+
+**CI does not run this, on purpose.** The deploy workflow would have to download
+a ~150 MB browser on every push to re-verify something that only changes when the
+design changes, and a headless container cannot check the two things most worth a
+human eye anyway: display-P3 wide-gamut colour (headless composites it down to
+sRGB) and font smoothing (differs from a real desktop compositor). Run it locally
+after touching `src/styles/`.
+
 ## Editing content
 
 **All copy lives in `src/content/`.** Components contain no prose, so text

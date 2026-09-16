@@ -19,3 +19,9 @@ public/scripts/nav.js
 # caches / logs
 *.tsbuildinfo
 *.log
+
+# Local visual audit output (tools/audit-visual.mjs). Binaries are not committed.
+.screenshots
+
+# Python bytecode from tools/
+__pycache__/
