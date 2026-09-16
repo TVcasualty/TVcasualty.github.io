@@ -9,7 +9,7 @@ export type SocialLink = {
   /** Visible label, also used as the accessible name. */
   label: string
   href: string
-  /** Shown in the footer's contact column when true. */
+  /** Shown as a button in the Contact band when true. */
   primary?: boolean
 }
 
@@ -31,14 +31,17 @@ export const site = {
   title: 'Software Developer',
 
   /* The single most visible piece of copy on the site: hero lede, meta
-     description and social card text, all from this one string.
+     description and social card text, all from this one string. Since the hero
+     no longer carries an <h1>, this is also the most prominent text on the page
+     — deliberately.
 
      It names no technology on purpose. A tool list reads as concrete for about
      a year and then quietly dates the page, and it narrows what people think
      they are allowed to ask about. Keep any future rewrite under ~160
-     characters so search results and social cards do not truncate it. */
+     characters so search results and social cards do not truncate it. This one
+     is 131. */
   tagline:
-    'A calm developer for uncalm problems. Most of what your thing needs, I already have. The rest I will have by the time it matters.',
+    'Chill dev for not so chill projects. Most of what your gig needs, I already got. The rest I will figure out by the time it matters.',
 
   /** Canonical origin. No trailing slash. */
   url: 'https://tvcasualty.github.io',
@@ -49,7 +52,11 @@ export const site = {
   /** The account that owns this repo, and the only GitHub link on the page. */
   github: 'https://github.com/TVcasualty',
 
-  /** This site's own repository, linked from the footer. */
+  /* This site's own repository. Currently unreferenced by any component: the
+     footer link that used it went with the rest of the old footer content when
+     that band became the misfitscentral.com embed. Kept because it is a true
+     fact about the site rather than dead layout, and it is the obvious source
+     for a future colophon. */
   repo: 'https://github.com/TVcasualty/TVcasualty.github.io',
 
   socials: [
@@ -59,7 +66,6 @@ export const site = {
 
   nav: [
     { label: 'Work', href: '#work' },
-    { label: 'About', href: '#about' },
     { label: 'Stack', href: '#stack' },
     { label: 'Writing', href: '#writing' },
     { label: 'Contact', href: '#contact' },

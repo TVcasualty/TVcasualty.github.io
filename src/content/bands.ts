@@ -62,20 +62,6 @@ export const work: WorkCard[] = [
 ]
 
 /**
- * The About band. One entry per paragraph.
- *
- * This is the band the whole rewrite hangs off: calm, capable, unbothered by
- * the parts not yet learned. Keep the mix of lengths — the short lines are what
- * stop it reading like a cover letter.
- */
-export const bio: string[] = [
-  'Software developer, chill by default. I like the work, I do not need the drama, and I would rather fix the problem than win the argument about it.',
-  'Whatever a project turns out to need, I have either done it or I will have it working by the time it matters. Tools get replaced every couple of years anyway; being unbothered by that is the part worth hiring.',
-  'Reliably good at: reading somebody else\u2019s mess and making sense of it, explaining a complicated thing in words that do not need a glossary, and saying \u201Cnot sure yet, give me an hour\u201D as though it were a normal sentence. It is.',
-  'Ask me about the thing you assume is too strange to ask about. That one is usually the most interesting.',
-]
-
-/**
  * The Stack band, rendered by SpecGrid as a spec sheet: label right-aligned
  * against a left-aligned column of values.
  *

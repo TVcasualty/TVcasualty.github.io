@@ -297,6 +297,21 @@ export const globalCss = defineGlobalStyles({
     flexDirection: 'column',
     justifyContent: 'center',
     padding: '6rem 2rem 8rem 2rem',
+    /* Side padding gets a px floor layered under the rem value, the same
+       treatment the tap-target minimum and the navbar clearance already get.
+
+       2rem is 20px at >=1100px, which is the gutter this design wants — but it
+       is tied to the fluid ladder, so it falls to 12.2px at 670px, 7.1px at
+       390px and 5.8px at 320px. Every band's content was running almost to the
+       bezel on a phone, which is exactly where a gutter matters most.
+
+       A floor rather than a replacement: `max()` yields 16px wherever the rem
+       value is smaller (everything below ~880px) and hands back to 2rem above
+       that, so desktop keeps scaling untouched and only the widths that were
+       broken change. Longhands follow the shorthand deliberately — they are
+       overriding its left/right components, not restating them. */
+    paddingLeft: 'max(2rem, 16px)',
+    paddingRight: 'max(2rem, 16px)',
     backgroundColor: 'pageBg',
     color: 'text',
   },

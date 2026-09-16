@@ -5,7 +5,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { SpecGrid } from '../components/SpecGrid'
 import { site } from '../content/site'
-import { work, workLede, bio, specs, writing, contact } from '../content/bands'
+import { work, workLede, specs, writing, contact } from '../content/bands'
 
 const heroInner = css({
   textAlign: 'center',
@@ -21,19 +21,6 @@ const heroRole = css({
   textTransform: 'uppercase',
   color: 'accent',
   margin: '0 0 2rem 0',
-})
-
-/* The hero's <h1> overrides the global 1.8em, which is smaller than the 2em
-   lede directly beneath it — the heading was losing to its own subtitle. This
-   is scoped to the hero rather than raised globally because h1 is also
-   NotFound.tsx's "Nothing here", which is sized correctly for that page.
-
-   3em keeps a clear step above the lede at every width while still wrapping to
-   three lines at 390px, where a larger value starts crowding the viewport. */
-const heroHeading = css({
-  fontSize: '3em',
-  lineHeight: '0.95',
-  margin: '0 0 0.35em 0',
 })
 
 /* The hero lede: 2em / 700 / 1.1 over a 110rem measure, per BRIEF §3.6. That
@@ -65,11 +52,6 @@ const cardGrid = css({
    on a phone, where the paragraph collapses to a narrow column inside a much
    wider band. `ch` is relative to this element's own font, so the measure
    stays at a constant number of characters at every width. */
-const prose = css({
-  maxWidth: '66ch',
-  fontSize: '1.05em',
-})
-
 const callout = css({
   maxWidth: '46ch',
   fontSize: '1.2em',
@@ -88,34 +70,28 @@ const contactGrid = css({
 /**
  * The single-page home route.
  *
- * The band rhythm follows BRIEF §5: gray → yellow → white → yellow →
- * aqua-light → purple, with the darkgray footer supplied by Layout. No two
- * adjacent bands share a colour, which is the one hard rule of §3.3.
+ * The band rhythm follows BRIEF §5, minus the deleted About band and with Work
+ * recoloured: gray → black → yellow → aqua-light → purple, with the darkgray
+ * footer supplied by Layout. No two adjacent bands share a colour, which is the
+ * one hard rule of §3.3.
  */
 export const Home = () => (
   <Layout path="/">
-    {/* Hero. Carries the page's only <h1>. */}
+    {/* Hero. Deliberately headingless — see the note in README.md's deviations:
+        the tagline carries the band on its own, so this page ships zero <h1>
+        elements. That is the owner's explicit choice, not an oversight. */}
     <ColorSection color="gray" as="header" id="hero" class={heroInner}>
       <p class={heroRole}>{site.role}</p>
-      <h1 class={heroHeading}>a chill dev for a not so chill project</h1>
       <p class={heroLede}>{site.tagline}</p>
     </ColorSection>
 
-    <ColorSection color="yellow" id="work" eyebrow="How it goes" heading="Work">
+    <ColorSection color="black" id="work" eyebrow="How it goes" heading="Work">
       <p class={callout}>{workLede}</p>
       <ul class={cardGrid}>
         {work.map((card) => (
           <Card card={card} key={card.slug} />
         ))}
       </ul>
-    </ColorSection>
-
-    <ColorSection color="white" id="about" eyebrow="The person" heading="About">
-      <div class={prose}>
-        {bio.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-      </div>
     </ColorSection>
 
     <ColorSection color="yellow" id="stack" eyebrow="Spec sheet" heading="Stack">
