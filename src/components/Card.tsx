@@ -1,12 +1,12 @@
 import { css } from '../../styled-system/css'
 import { Button } from './Button'
-import type { Project } from '../content/projects'
+import type { WorkCard } from '../content/bands'
 
 export type CardProps = {
-  project: Project
+  card: WorkCard
 }
 
-const card = css({
+const cardStyles = css({
   display: 'flex',
   flexDirection: 'column',
   bg: 'cardBg',
@@ -16,7 +16,7 @@ const card = css({
   height: '100%',
 })
 
-const stack = css({
+const kicker = css({
   fontSize: '0.8em',
   fontWeight: 'bold',
   letterSpacing: '0.04em',
@@ -25,7 +25,7 @@ const stack = css({
   marginBottom: '1.5rem',
 })
 
-const summary = css({
+const body = css({
   fontSize: '0.95em',
   lineHeight: '1.35',
   /* Pushes the button row to the bottom so cards of unequal copy length still
@@ -50,46 +50,42 @@ const thumb = css({
 })
 
 /**
- * A single project card (BRIEF §3.8 card grid).
+ * A single card in a card grid (BRIEF §3.8).
  *
  * Both action buttons are conditional: an absent `live` or `source` renders
- * nothing rather than a dead link, which is the whole point of those fields
- * being optional in the `Project` type.
+ * nothing rather than a dead link. The Work band passes neither, so the cards
+ * are pure copy — the affordance stays because the component is general.
  */
-export const Card = ({ project }: CardProps) => (
-  <li class={card}>
-    {project.image ? (
+export const Card = ({ card }: CardProps) => (
+  <li class={cardStyles}>
+    {card.image ? (
       <img
         class={thumb}
-        src={project.image.src}
-        width={project.image.width}
-        height={project.image.height}
-        alt={project.image.alt}
+        src={card.image.src}
+        width={card.image.width}
+        height={card.image.height}
+        alt={card.image.alt}
         loading="lazy"
         decoding="async"
       />
     ) : null}
 
-    <h3>{project.title}</h3>
-    <p class={stack}>{project.stack}</p>
-    <p class={summary}>{project.summary}</p>
+    <h3>{card.title}</h3>
+    <p class={kicker}>{card.kicker}</p>
+    <p class={body}>{card.body}</p>
 
-    {project.live || project.source ? (
+    {card.live || card.source ? (
       <div class={actions}>
-        {project.live ? (
-          <Button
-            href={project.live}
-            external
-            ariaLabel={`See ${project.title} live`}
-          >
+        {card.live ? (
+          <Button href={card.live} external ariaLabel={`See ${card.title} live`}>
             See live
           </Button>
         ) : null}
-        {project.source ? (
+        {card.source ? (
           <Button
-            href={project.source}
+            href={card.source}
             external
-            ariaLabel={`${project.title} source code`}
+            ariaLabel={`${card.title} source code`}
           >
             Source
           </Button>

@@ -1,8 +1,8 @@
 import { css } from '../../styled-system/css'
-import type { SkillGroup } from '../content/skills'
+import type { Spec } from '../content/bands'
 
 export type SpecGridProps = {
-  groups: SkillGroup[]
+  groups: Spec[]
 }
 
 /**

@@ -92,18 +92,25 @@ after touching `src/styles/`.
 ## Editing content
 
 **All copy lives in `src/content/`.** Components contain no prose, so text
-changes never require touching markup. Anything still needing the owner's words
-is marked with a `TODO(owner)` comment.
+changes never require touching markup. The one remaining `TODO(owner)` is a
+question about identity, not copy: which of the two GitHub accounts should lead.
 
 | File | Holds |
 | --- | --- |
 | `src/content/site.ts` | Name, role, tagline, URL, email, social links, nav items, OG defaults |
-| `src/content/projects.ts` | The project cards — the only place projects are edited |
-| `src/content/skills.ts` | The stack table and the About bio |
+| `src/content/bands.ts` | Every band's copy: the Work cards, the About bio, the Stack spec sheet, the Writing and Contact callouts |
 
-Adding a project means appending one entry to `projects`. `live` and `source`
-are optional: leave one out and its button simply isn't rendered, so a link that
-dies later degrades to nothing rather than shipping a 404.
+Two rules apply to anything added to `bands.ts`, and they are why the page no
+longer lists projects or technologies:
+
+1. **No named technologies, products, companies, clients or metrics.** Category
+   words are fine; brand names date the page and turn it back into a checklist.
+2. **No claim that cannot be met.** Writing sideways about real things is the
+   goal; inventing specifics is not an improvement on stating stale ones.
+
+`Card` and `SpecGrid` are general-purpose: `Card` still supports an optional
+image and `live`/`source` buttons, and renders none of them when the content
+omits them, which is how the Work band uses it.
 
 To add a page: create it in `src/pages/`, register it in `src/app.tsx` **with a
 trailing slash** (`/about/`) so it emits `dist/about/index.html`, and add its

@@ -5,8 +5,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { SpecGrid } from '../components/SpecGrid'
 import { site } from '../content/site'
-import { projects } from '../content/projects'
-import { skills, bio } from '../content/skills'
+import { work, workLede, bio, specs, writing, contact } from '../content/bands'
 
 const heroInner = css({
   textAlign: 'center',
@@ -102,15 +101,16 @@ export const Home = () => (
       </Button>
     </ColorSection>
 
-    <ColorSection color="yellow" id="work" eyebrow="Selected" heading="Work">
+    <ColorSection color="yellow" id="work" eyebrow="How it goes" heading="Work">
+      <p class={callout}>{workLede}</p>
       <ul class={cardGrid}>
-        {projects.map((project) => (
-          <Card project={project} key={project.slug} />
+        {work.map((card) => (
+          <Card card={card} key={card.slug} />
         ))}
       </ul>
     </ColorSection>
 
-    <ColorSection color="white" id="about" eyebrow="Who" heading="About">
+    <ColorSection color="white" id="about" eyebrow="The person" heading="About">
       <div class={prose}>
         {bio.map((paragraph) => (
           <p key={paragraph}>{paragraph}</p>
@@ -118,38 +118,24 @@ export const Home = () => (
       </div>
     </ColorSection>
 
-    <ColorSection color="yellow" id="stack" eyebrow="Tools" heading="Stack">
-      <SpecGrid groups={skills} />
+    <ColorSection color="yellow" id="stack" eyebrow="Spec sheet" heading="Stack">
+      <SpecGrid groups={specs} />
     </ColorSection>
 
     <ColorSection
       color="aqua-light"
       id="writing"
-      eyebrow="Notes"
+      eyebrow="Notebook"
       heading="Writing"
     >
-      <p class={callout}>
-        Short write-ups on the JavaScript I want to understand properly rather
-        than re-look-up — higher-order functions, classes, objects, and the odd
-        bit of Express and React.
-      </p>
-      <Button href="https://code-repo.netlify.app" variant="big" external>
-        Read the notebook
-      </Button>
+      {/* Prose only. The old CTA pointed at a named external site, which is the
+          same kind of thing as the removed demo links; see the note in
+          src/content/bands.ts. */}
+      <p class={callout}>{writing}</p>
     </ColorSection>
 
-    <ColorSection color="purple" id="contact" eyebrow="Say hello" heading="Contact">
-      <p class={callout}>
-        {/* TODO(owner): this says you are available, which is a claim about your
-            situation that only you can make. Pick one and delete the rest:
-              · actively looking  → "Looking for my next role — permanent or
-                contract. The fastest way to reach me is email."
-              · open but employed → keep the line below.
-              · not looking       → "Not looking right now, but always happy to
-                talk shop." */}
-        Open to interesting work and good problems. The fastest way to reach me
-        is email.
-      </p>
+    <ColorSection color="purple" id="contact" eyebrow="Say something" heading="Contact">
+      <p class={callout}>{contact}</p>
       <div class={contactGrid}>
         <Button href={`mailto:${site.email}`} variant="big">
           Email me

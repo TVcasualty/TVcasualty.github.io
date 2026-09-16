@@ -21,22 +21,24 @@ export type NavLink = {
 
 export const site = {
   name: 'Jorge Casal',
-  role: 'Software Developer',
 
-  /** Used in <title> and the OG title. */
+  /* Rendered as the hero's eyebrow, uppercased by CSS. Decorative, so it gets
+     to have a bit of voice — `title` below is the one that has to behave. */
+  role: 'Software Developer, low drama',
+
+  /* Used in <title> and the OG title, so it stays a plain job title: a search
+     result or a shared link has no room for a joke to land in. */
   title: 'Jorge Casal — Software Developer',
 
-  /* This is the single most visible piece of copy on the site: it is the hero
-     lede, the meta description and the social card text.
+  /* The single most visible piece of copy on the site: hero lede, meta
+     description and social card text, all from this one string.
 
-     TODO(owner): this describes what the repos and the old site show you doing,
-     not necessarily how you want to be introduced. Two things only you can
-     decide: whether "Full-stack" is the framing you want (the evidence is
-     stronger on the front end), and whether to name TypeScript/React/Node at
-     all — naming them reads as concrete but dates the page and narrows what
-     people think to approach you about. */
+     It names no technology on purpose. A tool list reads as concrete for about
+     a year and then quietly dates the page, and it narrows what people think
+     they are allowed to ask about. Keep any future rewrite under ~160
+     characters so search results and social cards do not truncate it. */
   tagline:
-    'Full-stack developer building fast, accessible web applications with TypeScript, React and Node.',
+    'A calm developer for uncalm problems. Most of what your thing needs, I already have. The rest I will have by the time it matters.',
 
   /** Canonical origin. No trailing slash. */
   url: 'https://tvcasualty.github.io',
@@ -81,6 +83,8 @@ export const site = {
     src: '/img/og-default.png',
     width: 1200,
     height: 630,
+    /* Describes the image for someone who cannot see it, so it stays literal
+       even though `role` does not. */
     alt: 'Jorge Casal — Software Developer',
   },
 } as const
