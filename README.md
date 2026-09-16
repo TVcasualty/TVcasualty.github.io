@@ -104,7 +104,7 @@ changes never require touching markup.
 | File | Holds |
 | --- | --- |
 | `src/content/site.ts` | Name, role, tagline, URL, social links, nav items, OG defaults |
-| `src/content/bands.ts` | Every band's copy: the Work cards, the Stack spec sheet, the Writing and Contact callouts |
+| `src/content/bands.ts` | Every band's copy: the Work cards, the Stack spec sheet, the Contact callout |
 
 Two rules apply to anything added to `bands.ts`, and they are why the page no
 longer lists projects or technologies:
@@ -185,33 +185,50 @@ the site evolves. Where the two disagree, this file is current:
   `site.email` field. Contact offers GitHub and LinkedIn only.
 - **The owner's name appears only in the navbar.** `<meta name="author">` and
   `og:site_name` are not emitted.
-- **No `<h1>` on the home page, and no About band.** Both are the owner's
-  explicit choices. The hero is now an eyebrow plus the tagline, with no heading
-  above it, so `index.html` ships zero `<h1>` elements — a deliberate departure
-  from §6's "one `<h1>` per page", flagged rather than discovered: screen-reader
-  users who navigate by heading level lose the page's entry point, and search
-  engines lose the strongest on-page signal. `404.html` still has its `<h1>`.
-  The About band and the `bio` copy behind it were deleted outright, following
-  the precedent set when `projects.ts` was removed.
-- **The footer is a live third-party embed.** The band is a single
-  `<iframe>` of `misfitscentral.com` at a fixed 900px height, plus a plain link
-  to the same URL. The wordmark, blurb, Sections nav, Elsewhere social list and
-  copyright line are all gone, site-wide (the home page and the 404 share one
-  footer). The link is not a fallback added after a failure: an embed of a site
-  this repo does not control can go blank or start refusing to be framed at any
-  time, so the working link ships alongside it. Verified in Chromium rather than
-  by header inspection alone — clean `X-Frame-Options` does not rule out in-page
-  frame-busting.
-- **Work is a `black` band, not `yellow`.** Band order is now hero (gray) → Work
-  (black) → Stack (yellow) → Writing (aqua-light) → Contact (purple) → footer
-  (darkgray); still no two adjacent bands sharing a colour (§3.3). The `white`
-  and `aqua` bands are now both defined-but-unused in `colors.ts`, which is
+- **No `<h1>` on the home page, and no About or Writing band.** All three are the
+  owner's explicit choices. The hero is now an eyebrow plus the tagline, with no
+  heading above it, so `index.html` ships zero `<h1>` elements — a deliberate
+  departure from §6's "one `<h1>` per page", flagged rather than discovered:
+  screen-reader users who navigate by heading level lose the page's entry point,
+  and search engines lose the strongest on-page signal. `404.html` still has its
+  `<h1>`. The About and Writing bands, and the `bio` and `writing` copy behind
+  them, were deleted outright, following the precedent set when `projects.ts` was
+  removed. Their nav entries went with them, so no anchor points at a missing
+  band.
+- **The footer is a live third-party embed, full-bleed and full-height.** The band
+  is a single `<iframe>` of `misfitscentral.com` at `100vh`, spanning edge to edge
+  with no border, radius, gutter or caption — the band's own padding and its
+  `.band-inner` 110rem measure are both cancelled for this one band, so it reads
+  as if the framed site were coded natively into the page rather than boxed as a
+  widget. The wordmark, blurb, Sections nav, Elsewhere social list and copyright
+  line are all gone, site-wide (the home page and the 404 share one footer).
+  Verified in Chromium rather than by header inspection alone — clean
+  `X-Frame-Options` does not rule out in-page frame-busting.
+
+  **There is deliberately no fallback link, and it has a known cost.** A visible
+  link to the same URL used to ship beside the frame, precisely because an embed
+  of a site this repo does not control can go blank or start refusing to be framed
+  at any time. It was removed on the owner's explicit instruction, native-embed
+  look over safety net. If the embed breaks, the band renders as an empty dark
+  screen and nothing on the page says what was meant to be there.
+
+  **Known artifact, accepted:** the framed page is a fixed-width ~720px layout
+  that does not reflow, so below a 720px viewport the bleed cuts it off mid-column
+  — text is sliced mid-word at the right edge (measured: 330px lost at 390px,
+  400px at 320px). This is inherent to full-bleed at a viewport narrower than the
+  framed document, not a CSS bug, and it is the reason the previous contained
+  version kept a gutter. Full-height (`100vh`) neither causes nor cures it; it is
+  purely a width effect.
+- **Work is an `aqua-light` band, not `yellow`.** Band order is now hero (gray) →
+  Work (aqua-light) → Stack (yellow) → Contact (purple) → footer (darkgray);
+  still no two adjacent bands sharing a colour (§3.3). The `white`, `aqua` and
+  `black` bands are now all defined-but-unused in `colors.ts`, which is
   deliberate — the tokens are complete for all eight bands so a band can be
   recoloured by changing one prop.
 - **Bands are at least one viewport tall from 670px up**, centred vertically,
   including the hero and the footer. Below 670px the floor is dropped and bands
   size to their content: on a phone a one-viewport minimum stranded the short
-  bands (Writing, Contact, footer) in a screenful of empty colour. The floor is
+  bands (Contact, footer) in a screenful of empty colour. The floor is
   `min-height`, never `height` — Work and Stack legitimately exceed it.
 - **Band side padding has a px floor.** `.colorsection` keeps `2rem` horizontal
   padding for the ladder to scale, with `max(2rem, 16px)` layered under it. In
