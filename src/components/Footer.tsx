@@ -18,10 +18,16 @@ import { css } from '../../styled-system/css'
  * hid or revealed itself — visible reflow inside the embed while scrolling past
  * it. `vh` is stable for the frame's whole life.
  *
- * Below 810px of viewport height the frame matches the band exactly: it resolves
- * to 100vh, the band's floor is 100dvh, and `vh >= dvh` means the band grows to
- * fit the frame rather than the reverse, so no gap opens at the edges. Above
- * 810px they diverge on purpose — see the tall-viewport note at the end.
+ * Below 810px of viewport height the frame is shorter than the band by exactly the
+ * 8rem reserved at the band's top, so the slack sits above the frame rather than
+ * being split — the band is a centring flex column, but with `paddingTop` taking
+ * the slack there is none left to distribute. Above 810px the cap binds and the
+ * remaining slack is split evenly below and above the reserved strip.
+ *
+ * (This used to read `min(100vh, 810px)`, where the frame matched the band exactly
+ * below 810px of height and no strip existed. The navbar transparency made that
+ * unsafe: with no strip, the frame's own light banner passed under the bar's white
+ * text. See the note on the height above.)
  *
  * Height only — the width and the edge-to-edge bleed are done in global.ts,
  * because they require overriding the band's own padding and inner measure,
@@ -61,16 +67,17 @@ import { css } from '../../styled-system/css'
  *
  * `min()` and not a bare 810px: on a viewport shorter than 810 the frame must
  * still shrink, or the band would be taller than the screen and the page would
- * scroll inside the footer for no reason. 100vh keeps the "fills the screen"
- * intent everywhere it can be honoured, and the cap only takes over above it.
+ * scroll inside the footer for no reason. `100vh - 8rem` keeps the "fills the
+ * screen" intent everywhere it can be honoured, and the cap only takes over above
+ * it. Measured frame heights: 792px at 720×844, 694px at 1024×768, 764px at
+ * 1280×844, and 810px (capped) from 1440×900 up.
  *
- * KNOWN TRADE-OFF: on a viewport taller than 810px the band's own
+ * KNOWN TRADE-OFF: on a viewport taller than 810px + 8rem the band's own
  * `min-height: 100dvh` floor keeps growing while the frame stops, so a strip of
- * the band's background appears. The band centres its content, so the slack is
- * split evenly above and below the frame rather than pooling at the bottom —
- * measured at 1440px wide: 45px each side at a 900px viewport, 95px at 1000px,
- * 195px at 1200px, 315px at 1440px. Below an 810px viewport there is no strip at
- * all, since the frame resolves to 100vh and matches the band exactly.
+ * the band's background appears. 8rem of it is the reserved strip at the top; the
+ * rest is split evenly above and below by the band's centring — measured at 1440px
+ * wide, the frame's top edge sits 85px down at a 900px viewport and 355px down at
+ * 1440px. Below that height there is no extra slack, only the 8rem reservation.
  *
  * The alternative is letting the frame grow to fill the band, which is precisely
  * what would expose the framed footer again. On a tall screen one of the two has
@@ -81,12 +88,41 @@ import { css } from '../../styled-system/css'
  * instead of `darkgray`, whose #1d1c18 read as a warm seam against the embed.
  *
  * This is why the strip is a geometry note rather than a defect, and also why
- * changing the footer band's colour would reintroduce a visible seam.
+ * changing the footer band's colour would reintroduce a visible seam — and now
+ * additionally why it would make the transparent navbar's text illegible, since
+ * the bar's only backdrop over this band is the reserved strip.
+ *
+ * SECOND COST, on the record: the reservation shortens the frame, so less of the
+ * framed page is visible than before. At 1024×768 it is 694px of the framed
+ * document instead of 768px. Nothing is cut off that was readable — the cap
+ * already stopped at 810px and the framed page is 948px tall — but the visible
+ * window is smaller on short viewports than it used to be.
  */
 const frame = css({
   display: 'block',
   width: '100%',
-  height: 'min(100vh, 810px)',
+  /* `100vh - 8rem`, not `100vh`, and the subtraction is a legibility fix rather
+     than a cosmetic one. The navbar goes fully transparent over this band
+     (global.ts), which removed the backdrop its white text used to sit on. The
+     framed page's own banner logo is light gray — measured rgb(190,190,190) — and
+     it begins about 3px into the framed document, spanning a centred 684px. So
+     wherever the frame's top edge rides under the bar, the wordmark or the nav
+     links land on that logo at 1.86:1, well under AA's 4.5:1.
+
+     8rem of reserved space at the band's top (the matching `paddingTop` in
+     global.ts) keeps the frame's top edge below the bar at every size, so the bar
+     is always over the band's own black. It is expressed in `rem` because the
+     navbar's height is font-driven too: measured at 44px at a 720px viewport,
+     47px at 768, 62px at 1024 and 68px at 1100 and up, which is a steady ~6.7rem,
+     so 8rem clears it by 8-12px at every width rather than at one.
+
+     Subtracting from the frame instead of just padding the band is what keeps the
+     band exactly one viewport tall: content becomes 8rem + (100vh - 8rem) = 100vh,
+     so no scrollbar appears inside the footer and the snap stops are unchanged.
+     The `810px` cap is untouched and still binds on tall viewports — the frame can
+     only ever get shorter here, which is the safe direction for the cap's purpose
+     of keeping the framed site's own footer out of view. */
+  height: 'min(calc(100vh - 8rem), 810px)',
   border: '0',
   /* An opaque base under the frame, so a slow or failed load reads as an empty
      dark surface rather than as a white flash or as the band showing through.

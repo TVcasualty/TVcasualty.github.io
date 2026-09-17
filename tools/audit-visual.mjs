@@ -1148,6 +1148,83 @@ const main = async () => {
         await context.close()
       }
     }
+
+    /* -- the navbar's backdrop over the footer embed ----------------
+     *
+     * A geometry check, deliberately sized differently from VIEWPORTS above.
+     *
+     * The navbar is fully transparent over the footer band, so its only backdrop
+     * there is whatever the band shows above the embed. The framed page's banner
+     * logo is light gray, so if the frame's top edge rides under the bar, white
+     * nav text lands on it — measured at 1.86:1 before this was fixed. The band
+     * reserves 8rem at its top and the frame subtracts the same, which is what
+     * keeps the bar over the band's own black.
+     *
+     * Why the sizes below and not VIEWPORTS: this failed as a function of BOTH
+     * axes, and neither 1440x900 nor 390x844 is in the failing region — 390 has
+     * the band hidden entirely, and at 900px of height the old strip happened to
+     * clear the bar, which is exactly how the first check missed it. The sizes
+     * here are the narrow-desktop and tablet-landscape shapes where it broke.
+     *
+     * Deliberately measures OUR OWN geometry (frame top vs bar height) rather
+     * than sampling the embed's pixels. A pixel check would be the more direct
+     * assertion, but it would depend on a third-party page loading, so it would
+     * turn a network failure into a red build — and this file already treats the
+     * embed not loading as a note. Geometry is the property we control and the
+     * one that actually regressed.
+     */
+    for (const [width, height] of [
+      [720, 844],
+      [768, 844],
+      [1024, 768],
+      [1024, 844],
+      [820, 720],
+    ]) {
+      const context = await browser.newContext({
+        viewport: { width, height },
+        deviceScaleFactor: 1,
+      })
+      const page = await context.newPage()
+      await page.goto(`${origin}/`, { waitUntil: 'load' })
+      await page.evaluate(() => document.fonts.ready)
+      await page.evaluate(() => {
+        const band = document.querySelector('footer.colorsection')
+        if (band)
+          window.scrollTo(0, band.getBoundingClientRect().top + window.scrollY)
+      })
+      await page.waitForTimeout(200)
+
+      const geometry = await page.evaluate(() => {
+        const band = document.querySelector('footer.colorsection')
+        const frame = band?.querySelector('iframe')
+        const nav = document.getElementById('navbar')
+        if (!band || !frame || !nav) return null
+        if (getComputedStyle(band).display === 'none') return { hidden: true }
+        return {
+          hidden: false,
+          navHeight: nav.offsetHeight,
+          strip: Math.round(
+            frame.getBoundingClientRect().top - band.getBoundingClientRect().top,
+          ),
+        }
+      })
+
+      if (!geometry) {
+        fail(
+          `nav backdrop @${width}x${height}: footer band, iframe or #navbar missing`,
+        )
+      } else if (!geometry.hidden && geometry.strip < geometry.navHeight) {
+        fail(
+          `nav backdrop @${width}x${height}: the footer band reserves only ` +
+            `${geometry.strip}px above the embed but the navbar is ` +
+            `${geometry.navHeight}px tall, so the frame rides under the bar. ` +
+            'The bar is transparent over this band, so its white text lands on ' +
+            "the framed page's light banner logo (measured 1.86:1). Keep the " +
+            "band's paddingTop and the frame's matching subtraction in step.",
+        )
+      }
+      await context.close()
+    }
   } finally {
     await browser.close()
     server.close()

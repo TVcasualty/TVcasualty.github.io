@@ -53,7 +53,8 @@ after touching `src/styles/theme/colors.ts`.
 
 `tools/audit-visual.mjs` re-checks the built site in a real browser: it serves
 `dist/` over HTTP, then asserts the rem ladder, per-element contrast, horizontal
-overflow, the fixed navbar's band mirroring and the CSS-only mobile menu, and
+overflow, the fixed navbar's band mirroring, the CSS-only mobile menu and the
+clearance the transparent navbar needs above the footer embed, and
 writes full-page screenshots to `.screenshots/` (gitignored).
 
 The footer's cross-origin embed gets an extra `*-footer.png` per page/width, and
@@ -202,7 +203,7 @@ the site evolves. Where the two disagree, this file is current:
   band.
 - **The footer is a live third-party embed, full-bleed and capped below the framed
   page's own footer.** The band is a single `<iframe>` of `misfitscentral.com` at
-  `min(100vh, 810px)`, spanning edge to edge with no border, radius, gutter or
+  `min(100vh - 8rem, 810px)`, spanning edge to edge with no border, radius, gutter or
   caption — the band's own padding and its `.band-inner` 110rem measure are both
   cancelled for this one band, so it reads as if the framed site were coded
   natively into the page rather than boxed as a widget. The wordmark, blurb,
@@ -303,11 +304,12 @@ the site evolves. Where the two disagree, this file is current:
   applies at 720px and up; below 720px the same gradient's bottom stop becomes
   `purple`, because this band is hidden there — see the limitation noted above.
 
-  **Second known artifact, now invisible rather than merely accepted:** above an
-  810px viewport height the band's `min-height: 100dvh` floor keeps growing while
-  the frame stops, and because the band centres its content the slack is split
-  evenly above and below the embed (at 1440px wide: 45px each side at a 900px
-  viewport, 315px each at 1440px). Below 810px there is no strip at all. The only
+  **Second known artifact, now invisible rather than merely accepted:** the band's
+  `min-height: 100dvh` floor grows with the viewport while the frame is capped, so a
+  strip of band background sits around the embed. 8rem of it is reserved at the top
+  on purpose (see the navbar note below); above 810px + 8rem of viewport height the
+  remaining slack is split by the band's centring — at 1440px wide the frame's top
+  edge sits 85px down at a 900px viewport and 355px down at 1440px. The only
   alternative is letting the frame grow to fill the band, which is what would
   expose the framed footer again — so the strip stays, but since the band is
   `black` it is the same colour as the embed and reads as nothing. Verified by
@@ -322,8 +324,47 @@ the site evolves. Where the two disagree, this file is current:
   attribute `nav.js` already mirrors from the active band, because `black` is the
   footer band's colour on both pages and nowhere else; it beats the `.scrolled` rule
   on specificity (one id and two class-level selectors against one id and one
-  class), so this does not depend on source order. The links keep the `text` token,
-  which on this band is white and measures 21:1 against the embed's pure black.
+  class), so this does not depend on source order.
+
+  **Removing the bar's background broke the legibility its text depended on, and
+  fixing that is why the frame's height gained a `- 8rem`.** The framed page's own
+  banner logo is light gray — measured `rgb(190,190,190)` off rendered pixels — and
+  it begins about 3px into the framed document, spanning a centred 684px. With the
+  frame's top edge riding under the bar, the white wordmark and nav links landed
+  directly on it at **1.86:1**, against AA's 4.5:1. The band now reserves `8rem` at
+  its top and the frame subtracts the same `8rem`, so the bar always has the band's
+  own black behind it and the band stays exactly one viewport tall (`8rem +
+  (100vh - 8rem)`), leaving the snap stops untouched. `rem` because the bar's height
+  is font-driven too: 44px at a 720px viewport, 47px at 768, 62px at 1024, 68px at
+  1100 and up — a steady ~6.7rem, so 8rem clears it by 8–17px at every width rather
+  than at one. Re-measured after the fix: 21:1 under every navbar element at
+  720×844, 1024×768, 1024×844, 1280×844 and 1440×900.
+
+  Two things worth being blunt about. **The cost:** the frame is shorter, so less of
+  the framed page shows on short viewports — 694px of it at 1024×768 where the
+  viewport used to give 768px. Nothing readable is lost (the cap already stopped at
+  810px of a 948px document) but the window is smaller. **What the colour checks
+  could not see:** `check-contrast.py` and the audit's contrast cross-check both
+  resolve colours from this repo's CSS, and a cross-origin iframe's pixels are not
+  in that model, so neither can fail on the *contrast* itself. What is committed
+  instead is a geometry gate in `audit-visual.mjs`: at 720×844, 768×844, 1024×768,
+  1024×844 and 820×720 it asserts the band reserves at least the navbar's height
+  above the embed. Those sizes are deliberately not the audit's usual 1440×900 and
+  390×844, because neither is in the failing region — that is how the first check
+  missed this. It measures our own boxes rather than the embed's pixels on purpose,
+  so a third-party outage cannot redden the build. Verified against a control that
+  strips the reservation out of the built CSS: the audit exits 1 with all five sizes
+  named. A text shadow on the bar's links is kept as a hedge in case the
+  third-party page puts something light back under the bar, but it is **not** the
+  fix and does not reach AA on its own: measured, it moved the worst case from
+  1.88:1 only to 2.12:1, and WCAG has no mechanism for crediting a shadow anyway.
+
+  A first attempt got this wrong in a way worth recording: a per-element probe at a
+  900px viewport height reported a clean 21:1 and missed the collision entirely,
+  because at that one height the strip above the frame happened to clear the bar.
+  The failure depended on **both** axes — viewport height set the strip size, width
+  set whether the centred logo reached the corners — so a single-viewport check was
+  never going to see it.
 
   Note for anyone checking this in `.screenshots`: `index-1440-footer.png` was
   showing a *purple* bar, which looked like the rule failing. It was the capture

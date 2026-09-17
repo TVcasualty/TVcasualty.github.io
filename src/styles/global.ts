@@ -369,6 +369,15 @@ export const globalCss = defineGlobalStyles({
     padding: '0',
     paddingLeft: '0',
     paddingRight: '0',
+    /* Reserved space for the transparent navbar, so the embed's light banner logo
+       never passes under the bar's white text. See Footer.tsx for the measurement
+       (the logo is rgb(190,190,190) and starts ~3px into the framed page, giving
+       1.86:1 against white) and for why the frame's height subtracts the same 8rem
+       — together they keep the band exactly one viewport tall.
+
+       Declared after the `padding: 0` shorthand above, deliberately: the shorthand
+       would otherwise reset it. Panda preserves this order within one rule. */
+    paddingTop: '8rem',
   },
   /* `.band-inner`'s 110rem cap is what makes every other band a centred column,
      and it is exactly what must not apply here: capped at 110rem the frame would
@@ -487,6 +496,22 @@ export const globalCss = defineGlobalStyles({
   '#navbar.scrolled[data-color="black"]': {
     backgroundColor: 'transparent',
     borderBottomColor: 'transparent',
+  },
+  /* A hedge, explicitly NOT the fix. The fix is geometric: the band reserves 8rem
+     at its top and the frame subtracts it, so the bar sits over the band's own
+     black at every size (see Footer.tsx). This shadow only covers the case where
+     the third-party page changes its layout and puts something light back under
+     the bar — the embed is not ours and can change without this repo changing.
+
+     Measured honestly, so it is not mistaken for a guarantee: with the frame
+     deliberately pushed back under the bar, the shadow moved the worst backdrop
+     from 1.88:1 to 2.12:1. That is a real improvement in edge definition and it is
+     nowhere near AA's 4.5:1, which is why it could not be the fix on its own.
+     WCAG has no mechanism for crediting a text shadow either, and
+     check-contrast.py cannot see cross-origin pixels in any case. */
+  '#navbar.scrolled[data-color="black"] a': {
+    textShadow:
+      '0 0 0.25em {colors.black}, 0 0 0.5em {colors.black}, 0 0 1em {colors.black}',
   },
   '#navbar .nav-inner': {
     display: 'flex',
