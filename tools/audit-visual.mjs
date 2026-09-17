@@ -130,13 +130,29 @@ const importPlaywright = async () => {
  * frame ready. In practice this settles in ~1.5s; the 5s budget is only there so
  * an offline or slow-responding misfitscentral.com cannot hang the audit.
  *
- * Returns a status object; the caller decides whether a timeout is fatal.
+ * Returns a status object; the caller decides whether a timeout is fatal. Note
+ * the third state: `found` but `hidden`. The footer band is `display: none` below
+ * 720px, where the framed page's fixed 720px layout would be clipped, so at the
+ * mobile viewport the iframe is in the DOM but never rendered. That is a correct
+ * result, not a broken embed, and it has to be distinguished explicitly —
+ * `scrollIntoViewIfNeeded` on a hidden element does not fail fast, it waits the
+ * full 30s for the element to become "stable" and then throws, which took the
+ * whole audit down with an unhandled TimeoutError rather than a diagnosis.
  */
 const FRAME_BUDGET_MS = 5000
 
 const settleFooterFrame = async (page, budgetMs = FRAME_BUDGET_MS) => {
   const handle = await page.$('iframe')
   if (!handle) return { found: false, ready: false }
+
+  // Asked of the band, not the iframe: the hide is applied to
+  // `footer.colorsection`, and an iframe inside a display:none ancestor reports
+  // no box of its own either way.
+  const hidden = await handle.evaluate((el) => {
+    const band = el.closest('.colorsection') ?? el
+    return band.offsetParent === null && getComputedStyle(band).position !== 'fixed'
+  })
+  if (hidden) return { found: true, hidden: true, ready: false }
 
   await handle.scrollIntoViewIfNeeded()
 
@@ -888,12 +904,23 @@ const main = async () => {
         }
 
         /* -- 6. navbar tracks the band beneath it -------------------- */
+        /* Hidden bands are excluded on both sides of this check, and that is not
+           a convenience: the footer band is `display: none` below 720px, where its
+           all-zero `getBoundingClientRect()` makes `top - height <= 0` trivially
+           true, so it would win the walk at every scroll position and the oracle
+           would demand a tint that no visible pixel justifies. nav.ts skips hidden
+           bands for exactly the same reason — this mirrors it rather than
+           reimplementing a second, more forgiving rule. Scrolling to one is
+           meaningless too: `top` is 0, so it would re-test scrollY=40 once per
+           hidden band. */
         const bands = await page.evaluate(() =>
-          Array.from(document.querySelectorAll('[data-color]')).map((element) => ({
-            color: element.dataset.color,
-            top: element.getBoundingClientRect().top + window.scrollY,
-            id: element.id || null,
-          })),
+          Array.from(document.querySelectorAll('[data-color]'))
+            .filter((element) => element.offsetParent !== null)
+            .map((element) => ({
+              color: element.dataset.color,
+              top: element.getBoundingClientRect().top + window.scrollY,
+              id: element.id || null,
+            })),
         )
 
         for (const band of bands) {
@@ -906,6 +933,7 @@ const main = async () => {
             const height = navbar.offsetHeight
             let active = null
             for (const element of document.querySelectorAll('[data-color]')) {
+              if (element.offsetParent === null) continue
               if (element.getBoundingClientRect().top - height <= 0) active = element
               else break
             }
@@ -967,6 +995,17 @@ const main = async () => {
         const frameStatus = await settleFooterFrame(page)
         if (!frameStatus.found) {
           fail(`${label}: no <iframe> found — the footer embed is missing`)
+        } else if (frameStatus.hidden) {
+          // Correct below 720px: the framed page is a fixed 720px layout, so the
+          // band is display:none there rather than showing a clipped embed.
+          // Recorded as a note so a missing `-footer.png` is never read as a
+          // capture that silently failed.
+          notes.push(
+            `${label}: footer band is hidden at this width (by design below ` +
+              '720px, where the embed\'s fixed 720px layout would be clipped), ' +
+              `so no ${pageName.replace(/\.html$/, '')}-${viewport.width}-footer.png ` +
+              'was written.',
+          )
         } else if (!frameStatus.ready) {
           // Not a failure of the site: most likely no network access to the
           // embedded origin. Flagged so a blank footer shot is never mistaken
@@ -981,7 +1020,21 @@ const main = async () => {
 
         const base = pageName.replace(/\.html$/, '')
 
-        if (frameStatus.found) {
+        if (frameStatus.found && !frameStatus.hidden) {
+          /* Park at the footer band's own top before capturing. `scrollIntoView-
+             IfNeeded` above stops as soon as the band is merely on screen, which
+             left the navbar still tinted by the PREVIOUS band: the image showed a
+             purple bar over the embed and read as if the footer-band transparency
+             rule had not applied. The rule was fine; the capture position was
+             lying. Scrolling to the band top puts the bar over the footer, which
+             is the state a reader sees. */
+          await page.evaluate(() => {
+            const band = document.querySelector('footer.colorsection')
+            window.scrollTo(0, band.getBoundingClientRect().top + window.scrollY)
+          })
+          // Long enough for the rAF-throttled tint and its 250ms transition.
+          await page.waitForTimeout(500)
+
           const band = await page.$('iframe')
           const footer = await band.evaluateHandle((el) =>
             el.closest('.colorsection'),

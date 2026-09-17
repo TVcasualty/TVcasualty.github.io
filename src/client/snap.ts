@@ -1,11 +1,10 @@
 /**
  * Band-to-band magnetic scrolling.
  *
- * When scrolling stops, if a nearby position would line a colour band up with
- * the screen, glide the rest of the way to it. The page is never prevented from
- * scrolling and no wheel, touch or key event is ever consumed — this only acts
- * once the scroll has already come to rest, which is what makes it impossible
- * for it to trap the page.
+ * When scrolling stops, glide to the nearest position that lines a colour band up
+ * with the screen. The page is never prevented from scrolling and no wheel, touch
+ * or key event is ever consumed — this only acts once the scroll has already come
+ * to rest, which is what makes it impossible for it to trap the page.
  *
  * That distinction is the whole reason this is script rather than CSS.
  * `scroll-snap-type: y mandatory` on `html` is three lines and looks obviously
@@ -42,33 +41,55 @@
  *    monotonic by construction and no sequence of gestures can fail to advance.
  *    This is precisely what mandatory snapping gets wrong.
  *
- * 4. A forward pull only commits past the midpoint between the two stops the
- *    reader is between. Half a gap is therefore the furthest the page can ever
- *    move forwards on its own (420px at 1440x900), and a deliberate one- or
- *    two-notch nudge is left exactly where the reader put it.
+ * 4. The pull always goes to the NEAREST stop, at any distance. There is no
+ *    threshold: wherever a scroll comes to rest, it is resolved onto a band
+ *    boundary, so the page cannot settle part-way between two sections. This is
+ *    the owner's explicit call and it makes the effect a pager — see the
+ *    trade-off note below, which is real and was measured, not theoretical.
  *
- * 5. A backward pull is capped much tighter, at 0.15 of a viewport, because the
- *    two rules serve different purposes: forward is the magnet, backward only
- *    tidies a small overshoot of a stop just crossed. Without its own cap it
- *    inherited the midpoint rule and misbehaved badly wherever two stops sit
- *    close together — a band's top and end-aligned stops are 87px apart at
- *    1440x900 and 100px at 1280x800, so a reader making an ordinary 4-notch run
- *    from the band top landed between the near stop and the distant next one, and
- *    got dragged 393px backwards. Measured across every stop and six run lengths,
- *    the cap takes the worst backward movement from 393px to 33px while still
- *    tidying every overshoot, at a cost of three flush landings out of thirty.
+ *    Rule 3 is what keeps this from becoming the mandatory-snap trap. Nearest-
+ *    always with no progress guard is exactly that failure: one 120px notch from
+ *    a band top has that same band top as its nearest stop, so it would be
+ *    returned there, forever. Because a backward pull must still be forward of
+ *    where the gesture began, the notch resolves onward to the next stop instead.
+ *    The two rules are therefore load-bearing together and neither can be removed
+ *    on its own.
  *
- * Rejected, measured: always advancing to the next stop, which lands flush every
- * single time and is the "one gesture, one band" pager feel. It moves the page
- * 780px for a 120px notch, and it denies fine-grained scrolling entirely — every
- * ArrowDown press jumps a whole band, which for anyone reading slowly or zoomed
- * in is worse than not having the effect.
+ *    Rule 3 also bounds the backward movement that dropping the threshold would
+ *    otherwise let in: a pull can never land behind the gesture's own starting
+ *    point, so unrequested backward movement is bounded by the length of the
+ *    gesture that caused it. An earlier version capped backward pulls separately
+ *    at 0.15 of a viewport for this reason; that cap is gone with the threshold,
+ *    because with nearest-always a backward pull is no longer a special case —
+ *    it is how an overshoot resolves.
+ *
+ * THE TRADE-OFF, stated plainly because it is a real cost and not a detail:
+ * every gesture now moves at least one band. One wheel notch, or one ArrowDown,
+ * travels a whole section — measured at 980px for a 120px notch. Fine-grained
+ * scrolling within a band is gone above 670px. For a reader going slowly, or
+ * zoomed in, that is worse than no effect at all, and it is the reason this
+ * behaviour was rejected the first time round. It ships because "never rest
+ * between two sections" was asked for directly, and the two cannot both be had.
+ * What is preserved: the bottom-aligned stops of rule 2 mean an oversized band's
+ * last lines are still reachable, so no copy becomes unreadable — verified, not
+ * assumed. `prefers-reduced-motion` and widths below 670px are unaffected, and
+ * both remain ordinary scrolling.
  */
 
-const MIN_WIDTH = 670
+const MIN_WIDTH_QUERY = 'screen and (min-width: 670px)'
 /* Below this width there is nothing to snap to: `.colorsection`'s one-viewport
    floor is gated at the same breakpoint in global.ts, so on a phone bands size to
-   their own content and their edges have no relationship to the screen. */
+   their own content and their edges have no relationship to the screen.
+
+   Asked as a media query rather than compared against `window.innerWidth`, and
+   spelled with the same `screen and` prefix global.ts uses, so the script and the
+   stylesheet cannot disagree. They would otherwise: `innerWidth` counts a classic
+   scrollbar, while a `min-width` query resolves against the viewport without it,
+   so on a desktop with non-overlay scrollbars there is a ~15px band of widths
+   where the magnet would be enabled while the bands have no one-viewport floor to
+   align to. Headless Chromium uses overlay scrollbars and measured the two as
+   identical at every width from 660 to 760, which is precisely why this could not
+   have been caught by measurement here. */
 
 const SETTLE_MS = 140
 /* Long enough that a wheel spin or a smooth-scroll animation is treated as one
@@ -77,9 +98,6 @@ const SETTLE_MS = 140
 const NEAR = 2
 /* Positions this close to a stop count as already on it. Absorbs sub-pixel
    layout and the rounding in the target list. */
-
-const MAX_BACKWARD = 0.15
-/* Ceiling on a backward pull, as a fraction of the viewport — see rule 5. */
 
 const AFTER_INPUT_MS = 400
 /* Suppression window after focus or hash navigation moves the page. The browser
@@ -107,6 +125,9 @@ export const initSnap = (): void => {
      rather than being downgraded to an instant jump, which would still relocate
      the page under them. Read live, since the setting can change mid-session. */
   const reduce = matchMedia('(prefers-reduced-motion: reduce)')
+  /* Matched live too, so a window dragged across the breakpoint or a device
+     rotated is handled without a resize listener. */
+  const wideEnough = matchMedia(MIN_WIDTH_QUERY)
 
   let timer: ReturnType<typeof setTimeout> | undefined
   let lastY = window.scrollY
@@ -119,18 +140,36 @@ export const initSnap = (): void => {
   let suppressUntil = 0
 
   /**
-   * Every scroll position at which a band lines up with the viewport: each band's
-   * top, plus the bottom-aligned position of any band whose content genuinely
-   * overflows. Recomputed per settle because band heights move with the fluid
-   * rem ladder, font loading and the footer embed.
+   * Every scroll position at which a band lines up with the viewport: the
+   * document's own two extremes, each band's top, and the bottom-aligned position
+   * of any band whose content overflows. Recomputed per settle because band
+   * heights move with the fluid rem ladder, font loading and the footer embed.
    */
   const stops = (): number[] => {
     const y = window.scrollY
     const vh = window.innerHeight
     const max = Math.round(root.scrollHeight - vh)
-    const out: number[] = []
+
+    /* 0 and max are genuine aligned positions — the first band top-aligned and
+       the last band bottom-aligned — so they belong in the list. Omitting them
+       left an upward gesture inside the first band with no stop ahead of it at
+       all, which made it rest mid-band: exactly the "stops between two sections"
+       complaint, in the one direction the earlier probes never drove. This is
+       separate from the guard in `settle` that declines to pull while the page is
+       already sitting at an extreme. */
+    const out: number[] = [0, max]
 
     for (const band of bands) {
+      /* A `display: none` band — the footer below 720px — returns an all-zero
+         rect, so `rect.top + scrollY` would evaluate to the CURRENT scroll
+         position and inject a phantom stop wherever the reader happens to be.
+         The "already aligned" test then matched it at every position and the
+         magnet silently did nothing between 670 and 719px. `offsetParent` is null
+         for a hidden element and non-null for a rendered one, which is the cheap
+         and exact test; a zero-height check would also catch a legitimately
+         empty band. */
+      if (band.offsetParent === null) continue
+
       const box = band.getBoundingClientRect()
       const top = Math.round(box.top + y)
       if (top > 0 && top < max) out.push(top)
@@ -168,7 +207,7 @@ export const initSnap = (): void => {
     }
 
     if (
-      window.innerWidth < MIN_WIDTH ||
+      !wideEnough.matches ||
       reduce.matches ||
       direction === 0 ||
       Date.now() < suppressUntil
@@ -199,47 +238,23 @@ export const initSnap = (): void => {
       }
     }
 
-    /* Nearest stop in either direction, but a backward one only while it is
-       still forward of where this gesture began (rule 3) and within the tight
-       backward cap (rule 5). */
+    /* Nearest stop in either direction (rule 4), except that a backward one must
+       still be forward of where this gesture began (rule 3) — which is the only
+       thing standing between nearest-always and the mandatory-snap trap. */
     let best: number | null = null
     let bestDistance = Infinity
-    let bestIsBackward = false
     for (const stop of list) {
+      if ((stop - y) * direction < 0 && (stop - gestureStart) * direction <= 0)
+        continue
       const distance = Math.abs(stop - y)
-      const backward = (stop - y) * direction < 0
-      if (backward) {
-        if ((stop - gestureStart) * direction <= 0) continue
-        if (distance > window.innerHeight * MAX_BACKWARD) continue
-      }
       if (distance < bestDistance) {
         bestDistance = distance
         best = stop
-        bestIsBackward = backward
       }
     }
     if (best === null) {
       gestureStart = y
       return
-    }
-
-    /* Forward pulls commit past the midpoint of the gap the reader is resting in
-       (rule 4). The gap is measured between the stops either side of the current
-       position, so the rule scales with band height instead of assuming one.
-       Backward pulls skip this: their own cap above is the whole rule. */
-    if (!bestIsBackward) {
-      let below: number | null = null
-      let above: number | null = null
-      for (const stop of list) {
-        if (stop <= y && (below === null || stop > below)) below = stop
-        if (stop >= y && (above === null || stop < above)) above = stop
-      }
-      const gap =
-        below === null || above === null ? window.innerHeight : above - below
-      if (bestDistance > gap / 2 + 1) {
-        gestureStart = y
-        return
-      }
     }
 
     pending = best

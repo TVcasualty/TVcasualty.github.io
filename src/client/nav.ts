@@ -47,6 +47,21 @@ if (navbar) {
        original's filter().reverse()[0] without allocating two arrays on every
        frame. */
     for (const band of bands) {
+      /* A `display: none` band must be ignored, not measured. Its
+         `getBoundingClientRect()` is all zeros, so `top - height <= 0` is
+         trivially true and it wins the walk at every scroll position. The footer
+         band is hidden below 720px, and being the last one in the document it
+         then claimed the tint everywhere on a phone: 404.html rendered a black
+         <html> behind its gray hero, and index.html turned the bar's
+         `data-color` to `black` over the purple Contact band — which the
+         footer-band transparency rule reads as "over the embed", so the bar lost
+         its background over ordinary content. `offsetParent` is null for a hidden
+         element and non-null for a rendered one.
+
+         `continue`, deliberately, not `break`: the loop below stops at the first
+         band still under the navbar, and a hidden band is not evidence that the
+         walk has run out of candidates. */
+      if (band.offsetParent === null) continue
       if (band.getBoundingClientRect().top - height <= 0) active = band
       else break
     }

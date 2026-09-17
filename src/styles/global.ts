@@ -382,6 +382,75 @@ export const globalCss = defineGlobalStyles({
   },
 
   /* ------------------------------------------------------------------ *
+   * Footer band: hidden below 720px
+   *
+   * The framed page is a fixed 720px layout that does not reflow — measured
+   * directly off the frame's own `scrollWidth`, which is 720px at every viewport
+   * and never smaller. Below that the full-bleed embed simply clips it: 50px lost
+   * at 670px, 290px at 430px, 330px at 390px, slicing text mid-word at the right
+   * edge. That was previously documented as an accepted artifact; it is now
+   * hidden instead, on the owner's call.
+   *
+   * 720px is the frame's own fit width rather than a device size, and it lands
+   * below the narrowest current iPad (744px portrait), so every iPad still gets
+   * the embed and no viewport ever sees a clipped one. Spelled as its own key —
+   * `max-width` here, not another `min-width: 670px` block — because these are
+   * object keys and Panda silently drops a duplicate.
+   *
+   * `display: none` on the band, not on the iframe: hiding only the frame would
+   * leave a full-viewport-tall black band with nothing in it. Removing the band
+   * from layout entirely makes Contact the last band on a phone, which has two
+   * knock-on effects handled below: `main` has to fill the viewport, or a short
+   * page exposes the html background where the footer used to be, and the
+   * overscroll gradient's bottom stop has to follow the new last band.
+   * ------------------------------------------------------------------ */
+  '@media screen and (max-width: 719px)': {
+    'footer.colorsection': {
+      display: 'none',
+    },
+    /* Removing the last band leaves a gap on any page whose remaining content is
+       shorter than the screen, and that gap is not "nothing" — it exposes the
+       <html> background underneath. Measured on 404.html: its single 506px hero
+       left 338px of bare html showing at 390x844, which rendered as the gradient's
+       bottom stop, a hard colour break below the hero on a page that is supposed
+       to be one flat colour.
+
+       Fixed by making the content fill the screen rather than by colouring the
+       gap, so there is no second place where a band colour is written down. `main`
+       gets the viewport floor and its last band absorbs the slack; `.colorsection`
+       is already a centring flex column, so a grown band centres its content
+       instead of stranding it at the top.
+
+       Scoped to `main >` deliberately: the footer band is a sibling of main, not
+       inside it, so this cannot fight the hide above. dvh layered over vh the same
+       way the desktop band floor does it, for the mobile browser chrome. */
+    main: {
+      minHeight: '100vh',
+      '&': { minHeight: '100dvh' },
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    'main > .colorsection:last-child': {
+      flexGrow: '1',
+    },
+    /* The gradient hard-codes the first and last band's colours for rubber-band
+       overscroll, and it only shows with JS off or before nav.js boots — once it
+       runs, `html[data-color]` replaces it with the active band's solid colour.
+
+       With the footer band gone the bottom stop follows the new last band to
+       purple. Honest limitation, since one gradient serves both pages: purple is
+       correct for index.html, whose last band is Contact, and wrong for 404.html,
+       whose last band is the gray hero. It is still strictly better than the black
+       it replaced, which was wrong for both, and it is now only reachable by
+       overscrolling past the bottom with JavaScript disabled — the fill above
+       means no part of the resting page shows it. */
+    html: {
+      backgroundImage:
+        'linear-gradient(to bottom, {colors.darkGray} 0 50%, {colors.purple} 50% 100%)',
+    },
+  },
+
+  /* ------------------------------------------------------------------ *
    * Navbar (BRIEF §3.4)
    *
    * Fixed and transparent until nav.js adds `.scrolled`, at which point it
@@ -402,6 +471,22 @@ export const globalCss = defineGlobalStyles({
   '#navbar.scrolled': {
     backgroundColor: 'pageBg',
     borderBottomColor: 'text',
+  },
+  /* The footer band is the exception: over the embed the bar goes fully
+     transparent — no background, no rule underneath — so the framed site reads
+     as occupying the screen rather than sitting under a chrome bar. Everything
+     else about the bar is unchanged; the links keep `text`, which on this band is
+     white and measures 21:1 against the embed's pure black.
+
+     Keyed off `data-color` rather than a footer-specific class because nav.js
+     already mirrors the active band's colour onto `#navbar`, and `black` is the
+     footer band's colour on both pages and nowhere else. It beats the
+     `.scrolled` rule above on specificity — one id, two class-level selectors
+     against one id and one class — so source order is not what is holding this
+     together. */
+  '#navbar.scrolled[data-color="black"]': {
+    backgroundColor: 'transparent',
+    borderBottomColor: 'transparent',
   },
   '#navbar .nav-inner': {
     display: 'flex',

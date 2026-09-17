@@ -6,7 +6,7 @@ Static site built with **Bun**, **Hono JSX** and **Panda CSS**. Pages are Hono
 routes pre-rendered to plain HTML at build time by `toSSG()`; GitHub Pages has
 no server runtime, so Hono never handles a production request. No client-side
 framework and no third-party runtime dependencies — the only JavaScript that
-reaches the browser is 2.1 KB (1.0 KB gzipped) that tints the navbar as it crosses
+reaches the browser is 2.0 KB (1.0 KB gzipped) that tints the navbar as it crosses
 colour bands and settles scrolling onto band boundaries.
 
 ## Requirements
@@ -61,7 +61,10 @@ those are the images to trust for it. Playwright's full-page capture cannot
 composite an out-of-process iframe that sits outside the viewport, so the embed
 reads as an empty box in the `index-*.png` / `404-*.png` shots no matter how
 long it is given to load. The `-footer.png` element captures are taken with the
-frame on-screen and loaded, so they show its real rendered content.
+frame on-screen and loaded, so they show its real rendered content. At 390px the
+footer band is hidden by design, so no `-footer.png` is written and the run prints
+a note saying so — a missing file there is the expected result, not a failed
+capture.
 
 Its value is that it is a *second opinion*. `check-contrast.py` reimplements the
 cascade to resolve colours and sizes; this script asks Chromium the same
@@ -232,13 +235,57 @@ the site evolves. Where the two disagree, this file is current:
   look over safety net. If the embed breaks, the band renders as an empty dark
   screen and nothing on the page says what was meant to be there.
 
-  **Known artifact, accepted:** the framed page is a fixed-width ~720px layout
-  that does not reflow, so below a 720px viewport the bleed cuts it off mid-column
-  — text is sliced mid-word at the right edge (measured: 330px lost at 390px,
-  400px at 320px). This is inherent to full-bleed at a viewport narrower than the
-  framed document, not a CSS bug, and it is the reason the previous contained
-  version kept a gutter. The height cap neither causes nor cures it; it is purely
-  a width effect.
+  **The clipping artifact is now fixed by hiding the band, not by accepting it.**
+  The framed page is a fixed **720px** layout that does not reflow — measured off
+  the frame's own `scrollWidth`, which reads 720px at every viewport from 390px to
+  1440px and never smaller. Below 720px the full-bleed embed simply cut it off
+  mid-column, slicing text mid-word at the right edge (50px lost at 670px, 290px at
+  430px, 330px at 390px). This was previously documented here as an accepted
+  artifact; on the owner's instruction `footer.colorsection` is now
+  `display: none` under `@media screen and (max-width: 719px)`.
+
+  The threshold is the frame's own fit width, not a device size, and it sits below
+  the narrowest current iPad (744px portrait), so every iPad still gets the embed
+  and no viewport ever renders a clipped one. Hiding the **band** rather than the
+  iframe is deliberate: hiding only the frame would leave a viewport-tall black band
+  containing nothing.
+
+  Two consequences had to be handled, and both were real bugs found by measurement
+  rather than anticipated:
+
+  - **A hidden band still answers `getBoundingClientRect()`, with zeros.** So
+    `rect.top + scrollY` evaluates to the *current scroll position*, which made the
+    hidden footer look like a band edge exactly where the reader already was. That
+    broke two things at once: `snap.ts` read "already aligned" at every position and
+    the magnet silently did nothing between 670 and 719px, and `nav.ts` picked the
+    footer as the active band at every scroll position — so on a phone `404.html`
+    painted a black `<html>` behind its gray hero, and on `index.html` the navbar
+    took `data-color="black"` over the purple Contact band, which the transparency
+    rule below then read as "over the embed" and stripped the bar's background from
+    ordinary content. Both now skip bands whose `offsetParent` is `null`.
+    `tools/audit-visual.mjs` contained a third copy of the same walk and had to be
+    fixed too, or its oracle would have demanded the buggy tint.
+  - **Removing the last band exposes the `<html>` background.** On `404.html`,
+    whose single hero is shorter than a phone screen, 338px of bare `html` showed
+    below the content at 390×844 and rendered as the overscroll gradient's bottom
+    stop — a hard colour break under the hero. Fixed by making `main` a
+    `min-height: 100vh/100dvh` flex column whose last band grows, so content fills
+    the screen and the gradient is only reachable by overscrolling. Verified by
+    sampling the bottom pixel row with JS both enabled and disabled, on both pages,
+    at 320/390/1440: zero exposed pixels everywhere.
+
+  **Honest limitation:** one `<html>` gradient serves both pages, so its mobile
+  bottom stop is now `purple` — correct for `index.html`, whose last band is
+  Contact, and wrong for `404.html`, whose last band is the gray hero. It is
+  strictly better than the `black` it replaced, which was wrong for both, and with
+  the fill above it is only reachable by overscrolling past the bottom with
+  JavaScript disabled.
+
+  **There is deliberately no fallback link on desktop either**, so below 720px there
+  is now nothing at all where the embed was — no link, no heading, no indication the
+  section exists. That is the intended outcome of this change combined with the
+  earlier removal of the fallback anchor, and it is worth stating plainly rather
+  than discovering later.
 
   **The footer band is `black`, not `darkgray`, so the embed has no visible
   edge.** The framed page's background measures pure `#000000` at every edge of
@@ -252,7 +299,9 @@ the site evolves. Where the two disagree, this file is current:
   `#1d1c18` and would flash that warm gray on every load before the lazy frame
   paints; and the bottom stop of `<html>`'s overscroll gradient in `global.ts` is
   `black` rather than `darkestGray`, since that gradient hard-codes the first and
-  last band's colours for rubber-band overscroll before `nav.js` boots.
+  last band's colours for rubber-band overscroll before `nav.js` boots. That
+  applies at 720px and up; below 720px the same gradient's bottom stop becomes
+  `purple`, because this band is hidden there — see the limitation noted above.
 
   **Second known artifact, now invisible rather than merely accepted:** above an
   810px viewport height the band's `min-height: 100dvh` floor keeps growing while
@@ -266,6 +315,21 @@ the site evolves. Where the two disagree, this file is current:
   combinations: every strip row is pure `#000`, with a control that forces the
   band back to `darkgray` and does report `rgb(29,28,24)`, so the check is not
   vacuous. Recolouring this band reintroduces the seam.
+
+  **The navbar goes fully transparent over this band** — no background, no rule
+  underneath — so the framed site reads as occupying the screen rather than sitting
+  under a chrome bar. Keyed as `#navbar.scrolled[data-color="black"]`, off the
+  attribute `nav.js` already mirrors from the active band, because `black` is the
+  footer band's colour on both pages and nowhere else; it beats the `.scrolled` rule
+  on specificity (one id and two class-level selectors against one id and one
+  class), so this does not depend on source order. The links keep the `text` token,
+  which on this band is white and measures 21:1 against the embed's pure black.
+
+  Note for anyone checking this in `.screenshots`: `index-1440-footer.png` was
+  showing a *purple* bar, which looked like the rule failing. It was the capture
+  position — `scrollIntoViewIfNeeded` stops as soon as the band is merely on screen,
+  leaving the bar still tinted by Contact. `tools/audit-visual.mjs` now scrolls to
+  the band's own top before shooting, and the image shows what a reader sees.
 - **Work is an `aqua-light` band, not `yellow`.** Band order is now hero (gray) →
   Work (aqua-light) → Stack (yellow) → Contact (purple) → footer (black);
   still no two adjacent bands sharing a colour (§3.3). The `white` and `aqua`
@@ -286,8 +350,9 @@ the site evolves. Where the two disagree, this file is current:
 ### Band-to-band magnetic scrolling
 
 `src/client/snap.ts` makes the page settle onto band boundaries: when scrolling
-stops, if a nearby position would line a band up with the screen, it glides the
-rest of the way. Bundled into `nav.js` alongside the navbar tinting.
+stops, it glides to the nearest position that lines a band up with the screen. The
+page can never come to rest part-way between two sections. Bundled into `nav.js`
+alongside the navbar tinting.
 
 **It is script rather than three lines of CSS because the CSS does not work
 here.** `scroll-snap-type: y mandatory` on `html` with `scroll-snap-align: start`
@@ -305,7 +370,7 @@ which is most scrolling.
 
 The script never calls `preventDefault` and never consumes an event. It acts only
 after the scroll has come to rest, which is what makes it structurally incapable
-of the trap above. Five rules, each of which exists because dropping it broke
+of the trap above. Four rules, each of which exists because dropping it broke
 something measurable:
 
 1. **Stops come from content, not band boxes.** A band's box can exceed the
@@ -322,17 +387,50 @@ something measurable:
 3. **A pull never lands behind where the gesture began.** It may move backwards
    *within* a gesture, which is what tidies an overshoot, but never behind its own
    start — so progress is monotonic by construction.
-4. **Forward pulls commit only past the midpoint** between the two stops the
-   reader is between, measured per gap so it scales with band height. Half a gap
-   (420px at 1440×900) is the furthest the page can move forwards on its own, and
-   a deliberate one- or two-notch nudge is left alone.
-5. **Backward pulls are capped separately, at 0.15 of a viewport.** Forward is
-   the magnet; backward only tidies a small overshoot. Sharing rule 4 made it
-   misbehave wherever two stops sit close together — a band's top and end-aligned
-   stops are 87px apart at 1440×900 — so an ordinary 4-notch run from the band top
-   landed between the near stop and the distant next one and was dragged 393px
-   *backwards*. The separate cap takes the worst backward movement to 33px while
-   still tidying every overshoot, costing three flush landings out of thirty.
+4. **The pull always goes to the nearest stop, at any distance.** There is no
+   threshold. `0` and the document's maximum scroll are in the stop list too, as
+   the first band top-aligned and the last band bottom-aligned.
+
+**Rules 3 and 4 are load-bearing together and neither can be removed alone.**
+Nearest-always *without* the progress guard is precisely the mandatory-snap trap
+described above: one 120px notch from a band top has that same band top as its
+nearest stop, so it would be returned there forever. Because a pull must stay
+forward of its gesture start, the notch resolves onward instead.
+
+**The trade-off, stated plainly, because it is a real cost.** Rule 4 replaced an
+earlier midpoint threshold (forward pulls committed only past the midpoint of the
+gap, backward ones capped at 0.15 of a viewport). That version left 5 of 8 wheel
+runs resting mid-band on purpose — small deliberate nudges stayed where the reader
+put them. "Never rest between two sections" was then asked for directly, and the
+two cannot both be had. So the effect is now a pager: **every gesture moves at
+least one band**, measured at 980px for a single 120px notch, and `ArrowDown` moves
+a whole section. For a reader going slowly or zoomed in that is worse than no
+effect at all, which is exactly why this behaviour was rejected the first time
+round. What is preserved: rule 2's bottom-aligned stops mean an oversized band's
+last lines are still reachable, verified at 1440×900/700/500, 1280×800, 1024×768
+and 800×700, so no copy became unreadable. Below 670px and under
+`prefers-reduced-motion` scrolling is ordinary and unaffected.
+
+Two bugs that only surfaced once the threshold was gone, both of which had let the
+page rest mid-band:
+
+- **`0` and `max` were missing from the stop list**, which was filtered to
+  `top > 0 && top < max`. Travelling *upward* inside the first band there was then
+  no stop ahead at all, so the page rested wherever the gesture ended — the
+  reported complaint, in the one direction earlier probes never drove.
+- **The hidden footer band injected a phantom stop** at the current scroll
+  position, disabling the magnet entirely between 670 and 719px. See the footer
+  section above; hidden bands are now skipped by `offsetParent`.
+
+The width gate is asked as `matchMedia('screen and (min-width: 670px)')` rather
+than compared against `window.innerWidth`, spelled identically to `global.ts`, so
+the script and the stylesheet cannot disagree. They would otherwise: `innerWidth`
+counts a classic scrollbar while a `min-width` query does not, leaving a ~15px band
+of widths on desktops with non-overlay scrollbars where the magnet would be live
+with no one-viewport band floor to align to. **Headless Chromium uses overlay
+scrollbars and measures the two as identical at every width from 660 to 760**, so
+this one could not have been caught here by measurement — it is reasoned, and it is
+the kind of claim worth re-checking on a real Windows or Linux desktop.
 
 Gated off below 670px, matching the breakpoint where `.colorsection` loses its
 one-viewport floor: on a phone bands size to their own content, so their edges
@@ -345,14 +443,10 @@ and let the tail of the browser's own scroll read as a new gesture. Measured
 consequence: the first wheel gesture immediately after a Tab does not snap, and
 it recovers on the next one, or after a ~400ms pause.
 
-**Rejected, measured:** always advancing to the next stop. It lands flush every
-single time and gives the "one gesture, one band" pager feel, but it moves the
-page 780px for a 120px notch and makes every `ArrowDown` jump a whole band, which
-for anyone reading slowly or zoomed in is worse than no effect at all.
-
 Verified against the built bundle rather than an injected prototype: no stop can
-be entered without a way out, every band's last line of copy stays reachable at
-1440×900/700/500, 1280×800, 1024×768 and 800×700, anchors land exactly where
+be entered without a way out (single notches walk to the bottom and back to the
+top at 1440×900, 1280×800, 1024×768 and 670×900), every band's last line of copy
+stays reachable, anchors land exactly where
 `:target { scroll-margin-top: 4em }` puts them (114px of clearance at 1440px,
 identical with the script stubbed out), `End`/`Home` reach the true extremes, the
 skip link is not stolen, no focused element is pulled off screen across 12 tab
