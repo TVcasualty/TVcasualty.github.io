@@ -1,14 +1,22 @@
 /**
- * The only client-side JavaScript on the site.
+ * The site's only client-side bundle. Two jobs, both decorative.
  *
- * It does one job: keep the navbar legible as it crosses colour bands
+ * The first is here: keep the navbar legible as it crosses colour bands
  * (BRIEF §3.5). Find the last `[data-color]` band whose top has passed under
  * the bar, then mirror its colour onto `#navbar` and `<html>`. Panda's band
  * conditions do the rest — the navbar has no colour rules of its own.
  *
+ * The second is band-to-band magnetic scrolling, in ./snap.ts, called at the
+ * bottom of this file. It lives in its own module because it shares nothing with
+ * the navbar tinting but ships in the same bundle, since a second request for a
+ * few hundred bytes of decoration is not worth it.
+ *
  * Everything here is decorative. With JS disabled the navbar simply stays
- * transparent over the hero, and every link and the mobile menu still work.
+ * transparent over the hero, scrolling is ordinary, and every link and the
+ * mobile menu still work.
  */
+
+import { initSnap } from './snap'
 
 const navbar = document.getElementById('navbar')
 
@@ -64,3 +72,6 @@ if (navbar) {
 
   update()
 }
+
+/* Independent of the navbar, and of whether `#navbar` was found at all. */
+initSnap()

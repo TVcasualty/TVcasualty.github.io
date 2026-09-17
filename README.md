@@ -6,7 +6,8 @@ Static site built with **Bun**, **Hono JSX** and **Panda CSS**. Pages are Hono
 routes pre-rendered to plain HTML at build time by `toSSG()`; GitHub Pages has
 no server runtime, so Hono never handles a production request. No client-side
 framework and no third-party runtime dependencies — the only JavaScript that
-reaches the browser is ~0.6 KB that tints the navbar as it crosses colour bands.
+reaches the browser is 2.1 KB (1.0 KB gzipped) that tints the navbar as it crosses
+colour bands and settles scrolling onto band boundaries.
 
 ## Requirements
 
@@ -128,7 +129,8 @@ These are rebuilt from source on every build and are gitignored:
 
 - `styled-system/` — Panda's `css()` function and token helpers
 - `public/styles/site.css` — the compiled stylesheet
-- `public/scripts/nav.js` — compiled from `src/client/nav.ts`
+- `public/scripts/nav.js` — bundled from `src/client/nav.ts` (which imports
+  `src/client/snap.ts`)
 - `dist/` — the deployable site
 
 The raster icons in `public/` are the exception: they're committed, but
@@ -281,44 +283,88 @@ the site evolves. Where the two disagree, this file is current:
   copy nearly to the bezel; the floor only engages below ~880px, so desktop is
   untouched.
 
-### Tried and rejected: scroll snapping between bands
+### Band-to-band magnetic scrolling
 
-Band-to-band scroll snapping (`scroll-snap-type: y mandatory` on `html`, with
-`scroll-snap-align: start` on `.colorsection`) was implemented, measured and then
-removed. Recorded here because the code looks obviously correct and the failure is
-invisible in DevTools, so it is likely to be attempted again.
+`src/client/snap.ts` makes the page settle onto band boundaries: when scrolling
+stops, if a nearby position would line a band up with the screen, it glides the
+rest of the way. Bundled into `nav.js` alongside the navbar tinting.
 
-**It makes the page immobile under ordinary mouse-wheel input.** Mandatory snapping
-resolves each gesture to the *nearest* snap position, so a gesture must propose a
-destination past the midpoint between the current band and the next, or the browser
-returns it to where it started. Bands are viewport-tall by design, which puts that
-midpoint at roughly 415–535px at 1440px wide. A mouse wheel notch is about 100px.
-Measured through Chromium's real gesture pipeline (`Input.synthesizeScrollGesture`,
-not synthetic wheel events): eight consecutive 100px notches from the hero at
-1440px leave the scroll position at 0. The page reads as frozen. The control that
-makes this conclusive is that the identical gestures with `scroll-snap-type: none`
-move exactly 100px each.
+**It is script rather than three lines of CSS because the CSS does not work
+here.** `scroll-snap-type: y mandatory` on `html` with `scroll-snap-align: start`
+on `.colorsection` was implemented first. It resolves each gesture to the
+*nearest* snap position, so a gesture proposing less than half a viewport is
+returned to where it started — and with viewport-tall bands that midpoint is
+450px at 1440×900 against a ~120px wheel notch. The page reads as frozen: eight
+consecutive notches leave `scrollY` at 0, while the same gestures with
+`scroll-snap-type: none` move 120px each. It reproduces on a bare page of five
+`100vh` sections, and it is Chrome's documented "hidden scroll-snap threshold",
+not a quirk of this stylesheet. `proximity` is not a fix; it fights small scrolls
+near an edge for the same reason. Keyboard paging and anchor links worked fine
+under `mandatory` — the defect is specific to small, deliberate wheel increments,
+which is most scrolling.
 
-The behaviour belongs to the CSS feature, not to this stylesheet — a minimal page
-consisting only of five bare `100vh` sections and `y mandatory` reproduces it
-exactly. `proximity` is not a fix: it advances at 300px instead of 450px, still
-cannot move on a 100px notch, and settles on a band top far less often. Larger
-gestures, trackpad flicks, keyboard paging and the nav's anchor links all worked
-correctly; the defect is specific to small, deliberate wheel increments. Touch was
-never verified either way, because Chromium's touch-gesture synthesis does not
-deliver `touchmove` in this environment.
+The script never calls `preventDefault` and never consumes an event. It acts only
+after the scroll has come to rest, which is what makes it structurally incapable
+of the trap above. Five rules, each of which exists because dropping it broke
+something measurable:
 
-**One real bug surfaced while investigating, and the fix was also reverted.**
-`overflow-x: hidden` is set on `html, body`. On `body` that computes `overflow-y`
-to `auto`, which makes body a scroll container — and a snap area snaps within its
-*nearest* scroll container ancestor. So any `scroll-snap-type` on `html` silently
-applies to nothing at all, with every computed style still looking correct. Moving
-the clip to `html` alone fixes it and costs nothing (checked on both pages at
-320/390/670/900/1440/1920, with and without body's declaration: `scrollWidth`
-equals `clientWidth` and no element passes the viewport edge in any of the 24
-combinations). That change was reverted along with the rest, since without snapping
-there is no reason to touch a rule marked "required, not defensive" — but anyone
-adding snapping later must make this change first, or it will appear to do nothing.
+1. **Stops come from content, not band boxes.** A band's box can exceed the
+   viewport purely through its own `8rem` bottom padding — Work measures 980px
+   against a 900px viewport, 80px of it padding — and a stop at a padding edge
+   reveals nothing. Using box edges put a stop 13px from a band top at 800×700,
+   where one wheel notch moved the page 13px.
+2. **A band whose content overflows gets a second, bottom-aligned stop.** At
+   1440×900 Stack's copy ends 87px below what its top-aligned stop can show;
+   without a stop at `contentBottom − innerHeight` those 87px are unreachable,
+   because the magnet keeps pulling the reader back to the band top. This mirrors
+   CSS scroll snap, where a snap area larger than the snapport may rest at either
+   edge.
+3. **A pull never lands behind where the gesture began.** It may move backwards
+   *within* a gesture, which is what tidies an overshoot, but never behind its own
+   start — so progress is monotonic by construction.
+4. **Forward pulls commit only past the midpoint** between the two stops the
+   reader is between, measured per gap so it scales with band height. Half a gap
+   (420px at 1440×900) is the furthest the page can move forwards on its own, and
+   a deliberate one- or two-notch nudge is left alone.
+5. **Backward pulls are capped separately, at 0.15 of a viewport.** Forward is
+   the magnet; backward only tidies a small overshoot. Sharing rule 4 made it
+   misbehave wherever two stops sit close together — a band's top and end-aligned
+   stops are 87px apart at 1440×900 — so an ordinary 4-notch run from the band top
+   landed between the near stop and the distant next one and was dragged 393px
+   *backwards*. The separate cap takes the worst backward movement to 33px while
+   still tidying every overshoot, costing three flush landings out of thirty.
+
+Gated off below 670px, matching the breakpoint where `.colorsection` loses its
+one-viewport floor: on a phone bands size to their own content, so their edges
+have no relationship to the screen and there is nothing to snap to. Also off
+under `prefers-reduced-motion: reduce`, read live so it responds mid-session.
+Suppressed for 400ms after `focusin` or `hashchange`, extended by each scroll
+event that arrives while it is already active — the nav's smooth anchor scrolls
+measured 541/784/987ms at 1440×900, so a fixed window would expire mid-animation
+and let the tail of the browser's own scroll read as a new gesture. Measured
+consequence: the first wheel gesture immediately after a Tab does not snap, and
+it recovers on the next one, or after a ~400ms pause.
+
+**Rejected, measured:** always advancing to the next stop. It lands flush every
+single time and gives the "one gesture, one band" pager feel, but it moves the
+page 780px for a 120px notch and makes every `ArrowDown` jump a whole band, which
+for anyone reading slowly or zoomed in is worse than no effect at all.
+
+Verified against the built bundle rather than an injected prototype: no stop can
+be entered without a way out, every band's last line of copy stays reachable at
+1440×900/700/500, 1280×800, 1024×768 and 800×700, anchors land exactly where
+`:target { scroll-margin-top: 4em }` puts them (114px of clearance at 1440px,
+identical with the script stubbed out), `End`/`Home` reach the true extremes, the
+skip link is not stolen, no focused element is pulled off screen across 12 tab
+stops, and wheeling over the cross-origin footer embed still snaps the parent.
+
+**A related trap, still present and deliberately unfixed.** `overflow-x: hidden` is
+set on `html, body` in `global.ts`. On `body` that computes `overflow-y` to `auto`,
+making body a scroll container — so a `scroll-snap-type` on `html` silently applies
+to nothing at all, with every computed style still looking correct. That rule is
+marked "required, not defensive" and is left alone, because the script reads
+`window.scrollY` and is unaffected. Anyone reaching for CSS snapping again will hit
+this first, and must move the clip to `html` alone before the CSS does anything.
 
 ## Deployment
 
