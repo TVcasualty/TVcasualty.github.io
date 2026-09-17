@@ -195,15 +195,33 @@ the site evolves. Where the two disagree, this file is current:
   them, were deleted outright, following the precedent set when `projects.ts` was
   removed. Their nav entries went with them, so no anchor points at a missing
   band.
-- **The footer is a live third-party embed, full-bleed and full-height.** The band
-  is a single `<iframe>` of `misfitscentral.com` at `100vh`, spanning edge to edge
-  with no border, radius, gutter or caption — the band's own padding and its
-  `.band-inner` 110rem measure are both cancelled for this one band, so it reads
-  as if the framed site were coded natively into the page rather than boxed as a
-  widget. The wordmark, blurb, Sections nav, Elsewhere social list and copyright
-  line are all gone, site-wide (the home page and the 404 share one footer).
-  Verified in Chromium rather than by header inspection alone — clean
-  `X-Frame-Options` does not rule out in-page frame-busting.
+- **The footer is a live third-party embed, full-bleed and capped below the framed
+  page's own footer.** The band is a single `<iframe>` of `misfitscentral.com` at
+  `min(100vh, 810px)`, spanning edge to edge with no border, radius, gutter or
+  caption — the band's own padding and its `.band-inner` 110rem measure are both
+  cancelled for this one band, so it reads as if the framed site were coded
+  natively into the page rather than boxed as a widget. The wordmark, blurb,
+  Sections nav, Elsewhere social list and copyright line are all gone, site-wide
+  (the home page and the 404 share one footer). Verified in Chromium rather than by
+  header inspection alone — clean `X-Frame-Options` does not rule out in-page
+  frame-busting.
+
+  **The 810px cap hides the framed site's own footer,** so the band does not read
+  as one page's footer stacked on another's. It cannot be done by styling: a
+  different origin's DOM is opaque, so no selector or script here can reach
+  `div.footer`, and the only lever is how much of the framed document is ever
+  visible. That means the cap *plus* `scrolling="no"` on the iframe — a deprecated
+  HTML4 attribute, kept because its modern replacement (`overflow: hidden` on the
+  framed root) is exactly what the cross-origin boundary forbids. Either one alone
+  leaves the footer reachable.
+
+  810 is measured off the live page's computed styles and identical at 390/720/1440
+  (the framed layout is fixed-width): the pumpkin ends at 808, `div.footer`'s box
+  begins at 818, and its first text sits at 908. The usable window is 808–817 —
+  below it the cap slices the pumpkin, above it the footer's box shows. This gives
+  up the decorative skull row at 818–908, which is only visible as `div.footer`'s
+  background: keeping it would mean admitting that element's box, so any later
+  change to its padding would walk the footer's text into view.
 
   **There is deliberately no fallback link, and it has a known cost.** A visible
   link to the same URL used to ship beside the frame, precisely because an embed
@@ -217,8 +235,18 @@ the site evolves. Where the two disagree, this file is current:
   — text is sliced mid-word at the right edge (measured: 330px lost at 390px,
   400px at 320px). This is inherent to full-bleed at a viewport narrower than the
   framed document, not a CSS bug, and it is the reason the previous contained
-  version kept a gutter. Full-height (`100vh`) neither causes nor cures it; it is
-  purely a width effect.
+  version kept a gutter. The height cap neither causes nor cures it; it is purely
+  a width effect.
+
+  **Second known artifact, accepted:** above an 810px viewport height the band's
+  `min-height: 100dvh` floor keeps growing while the frame stops, and because the
+  band centres its content the slack shows as a strip of band background split
+  evenly above and below the embed (at 1440px wide: 45px each side at a 900px
+  viewport, 315px each at 1440px). Below 810px there is no strip at all. The only
+  alternative is letting the frame grow to fill the band, which is what would
+  expose the framed footer again; on a tall screen one of the two has to happen,
+  and the strip is `cardBg`-toned to match both the frame's base and the framed
+  page's black.
 - **Work is an `aqua-light` band, not `yellow`.** Band order is now hero (gray) →
   Work (aqua-light) → Stack (yellow) → Contact (purple) → footer (darkgray);
   still no two adjacent bands sharing a colour (§3.3). The `white`, `aqua` and
@@ -235,6 +263,45 @@ the site evolves. Where the two disagree, this file is current:
   rem alone the gutter fell to 7.1px at 390px and 5.8px at 320px, running the
   copy nearly to the bezel; the floor only engages below ~880px, so desktop is
   untouched.
+
+### Tried and rejected: scroll snapping between bands
+
+Band-to-band scroll snapping (`scroll-snap-type: y mandatory` on `html`, with
+`scroll-snap-align: start` on `.colorsection`) was implemented, measured and then
+removed. Recorded here because the code looks obviously correct and the failure is
+invisible in DevTools, so it is likely to be attempted again.
+
+**It makes the page immobile under ordinary mouse-wheel input.** Mandatory snapping
+resolves each gesture to the *nearest* snap position, so a gesture must propose a
+destination past the midpoint between the current band and the next, or the browser
+returns it to where it started. Bands are viewport-tall by design, which puts that
+midpoint at roughly 415–535px at 1440px wide. A mouse wheel notch is about 100px.
+Measured through Chromium's real gesture pipeline (`Input.synthesizeScrollGesture`,
+not synthetic wheel events): eight consecutive 100px notches from the hero at
+1440px leave the scroll position at 0. The page reads as frozen. The control that
+makes this conclusive is that the identical gestures with `scroll-snap-type: none`
+move exactly 100px each.
+
+The behaviour belongs to the CSS feature, not to this stylesheet — a minimal page
+consisting only of five bare `100vh` sections and `y mandatory` reproduces it
+exactly. `proximity` is not a fix: it advances at 300px instead of 450px, still
+cannot move on a 100px notch, and settles on a band top far less often. Larger
+gestures, trackpad flicks, keyboard paging and the nav's anchor links all worked
+correctly; the defect is specific to small, deliberate wheel increments. Touch was
+never verified either way, because Chromium's touch-gesture synthesis does not
+deliver `touchmove` in this environment.
+
+**One real bug surfaced while investigating, and the fix was also reverted.**
+`overflow-x: hidden` is set on `html, body`. On `body` that computes `overflow-y`
+to `auto`, which makes body a scroll container — and a snap area snaps within its
+*nearest* scroll container ancestor. So any `scroll-snap-type` on `html` silently
+applies to nothing at all, with every computed style still looking correct. Moving
+the clip to `html` alone fixes it and costs nothing (checked on both pages at
+320/390/670/900/1440/1920, with and without body's declaration: `scrollWidth`
+equals `clientWidth` and no element passes the viewport edge in any of the 24
+combinations). That change was reverted along with the rest, since without snapping
+there is no reason to touch a rule marked "required, not defensive" — but anyone
+adding snapping later must make this change first, or it will appear to do nothing.
 
 ## Deployment
 
