@@ -64,19 +64,24 @@ import { css } from '../../styled-system/css'
  * scroll inside the footer for no reason. 100vh keeps the "fills the screen"
  * intent everywhere it can be honoured, and the cap only takes over above it.
  *
- * KNOWN TRADE-OFF, accepted rather than hidden: on a viewport taller than 810px
- * the band's own `min-height: 100dvh` floor keeps growing while the frame stops,
- * so a strip of the band's background appears. The band centres its content, so
- * the slack is split evenly above and below the frame rather than pooling at the
- * bottom — measured at 1440px wide: 45px each side at a 900px viewport, 95px at
- * 1000px, 195px at 1200px, 315px at 1440px. Below an 810px viewport there is no
- * strip at all, since the frame resolves to 100vh and matches the band exactly.
+ * KNOWN TRADE-OFF: on a viewport taller than 810px the band's own
+ * `min-height: 100dvh` floor keeps growing while the frame stops, so a strip of
+ * the band's background appears. The band centres its content, so the slack is
+ * split evenly above and below the frame rather than pooling at the bottom —
+ * measured at 1440px wide: 45px each side at a 900px viewport, 95px at 1000px,
+ * 195px at 1200px, 315px at 1440px. Below an 810px viewport there is no strip at
+ * all, since the frame resolves to 100vh and matches the band exactly.
  *
  * The alternative is letting the frame grow to fill the band, which is precisely
  * what would expose the framed footer again. On a tall screen one of the two has
- * to happen, and a plain dark strip is the more defensible artifact. It is
- * `cardBg`-toned, matching the frame's own base and the framed page's black, so
- * it reads as part of the same surface.
+ * to happen, so the strip stays — but it is not *visible*: the band is `black`
+ * and the framed page's background measures pure #000 at every edge, so band,
+ * frame base and embed are one continuous colour and the frame's edges cannot be
+ * located by eye. That is the whole reason Layout uses a `black` band here
+ * instead of `darkgray`, whose #1d1c18 read as a warm seam against the embed.
+ *
+ * This is why the strip is a geometry note rather than a defect, and also why
+ * changing the footer band's colour would reintroduce a visible seam.
  */
 const frame = css({
   display: 'block',
@@ -89,16 +94,24 @@ const frame = css({
      This is the one piece of the old box styling that survives, and it is on the
      iframe itself rather than on a wrapper: there is no wrapping box any more.
 
-     `cardBg` rather than a literal: it is a token, so it tracks the band if the
-     footer is ever recoloured, and in this darkgray band it resolves to a
-     near-black that matches the framed page's own black background — a white
-     base flashed visibly on every load before the lazy frame painted. */
-  backgroundColor: 'cardBg',
+     `pageBg` rather than a literal `#000`: it is a token, so it tracks the band
+     if the footer is ever recoloured. On the `black` band this one sits in, it
+     resolves to pure black, which is exactly the framed page's own background —
+     so the base, the band and the embed are one continuous colour, and neither a
+     slow load nor the strip above and below the capped frame shows a seam.
+
+     It was `cardBg` while this sat on the darkgray band, where that token gave a
+     near-black #212223. On black, `cardBg` resolves to #1d1c18 — a warm dark
+     gray that would flash visibly against the frame on every load. */
+  backgroundColor: 'pageBg',
 })
 
 /**
- * The footer band. Rendered inside a `darkgray` ColorSection by Layout, so it
- * inherits that band's tokens like any other content.
+ * The footer band. Rendered inside a `black` ColorSection by Layout, so it
+ * inherits that band's tokens like any other content. The band is black rather
+ * than darkgray specifically so its background matches the framed page's own
+ * #000 and the strip above and below the capped frame becomes invisible; the
+ * reasoning lives at the ColorSection in Layout.tsx.
  *
  * Its entire content is one full-bleed, full-height embed of misfitscentral.com,
  * with no chrome of any kind: no border, no radius, no gutter, no caption. The

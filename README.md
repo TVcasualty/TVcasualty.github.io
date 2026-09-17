@@ -238,21 +238,38 @@ the site evolves. Where the two disagree, this file is current:
   version kept a gutter. The height cap neither causes nor cures it; it is purely
   a width effect.
 
-  **Second known artifact, accepted:** above an 810px viewport height the band's
-  `min-height: 100dvh` floor keeps growing while the frame stops, and because the
-  band centres its content the slack shows as a strip of band background split
+  **The footer band is `black`, not `darkgray`, so the embed has no visible
+  edge.** The framed page's background measures pure `#000000` at every edge of
+  the frame (read off rendered pixels, not inferred from its CSS), so putting the
+  band on the `black` token makes the band background, the iframe's own base
+  colour and the framed document one continuous colour — the strip described
+  below still exists geometrically but cannot be located by eye. On `darkgray` it
+  showed as a warm `#1d1c18` seam framing the embed. Two things follow from the
+  same measurement and are easy to miss: the iframe's own `backgroundColor` is
+  `pageBg` rather than `cardBg`, because `cardBg` on a black band resolves to
+  `#1d1c18` and would flash that warm gray on every load before the lazy frame
+  paints; and the bottom stop of `<html>`'s overscroll gradient in `global.ts` is
+  `black` rather than `darkestGray`, since that gradient hard-codes the first and
+  last band's colours for rubber-band overscroll before `nav.js` boots.
+
+  **Second known artifact, now invisible rather than merely accepted:** above an
+  810px viewport height the band's `min-height: 100dvh` floor keeps growing while
+  the frame stops, and because the band centres its content the slack is split
   evenly above and below the embed (at 1440px wide: 45px each side at a 900px
   viewport, 315px each at 1440px). Below 810px there is no strip at all. The only
   alternative is letting the frame grow to fill the band, which is what would
-  expose the framed footer again; on a tall screen one of the two has to happen,
-  and the strip is `cardBg`-toned to match both the frame's base and the framed
-  page's black.
+  expose the framed footer again — so the strip stays, but since the band is
+  `black` it is the same colour as the embed and reads as nothing. Verified by
+  sampling rendered pixel rows across the frame's edges at four page/width/height
+  combinations: every strip row is pure `#000`, with a control that forces the
+  band back to `darkgray` and does report `rgb(29,28,24)`, so the check is not
+  vacuous. Recolouring this band reintroduces the seam.
 - **Work is an `aqua-light` band, not `yellow`.** Band order is now hero (gray) →
-  Work (aqua-light) → Stack (yellow) → Contact (purple) → footer (darkgray);
-  still no two adjacent bands sharing a colour (§3.3). The `white`, `aqua` and
-  `black` bands are now all defined-but-unused in `colors.ts`, which is
-  deliberate — the tokens are complete for all eight bands so a band can be
-  recoloured by changing one prop.
+  Work (aqua-light) → Stack (yellow) → Contact (purple) → footer (black);
+  still no two adjacent bands sharing a colour (§3.3). The `white` and `aqua`
+  bands remain defined-but-unused in `colors.ts`, which is deliberate — the
+  tokens are complete for all eight bands so a band can be recoloured by changing
+  one prop, which is exactly what moving the footer to `black` did.
 - **Bands are at least one viewport tall from 670px up**, centred vertically,
   including the hero and the footer. Below 670px the floor is dropped and bands
   size to their content: on a phone a one-viewport minimum stranded the short

@@ -106,7 +106,15 @@ export const Layout = ({
 
           <main id="main">{children}</main>
 
-          <ColorSection color="darkgray" as="footer">
+          {/* `black` and not `darkgray`, so the band disappears behind the
+              embed. The framed page's background is pure #000 (measured off
+              rendered pixels at every edge of the frame, not inferred from its
+              CSS), and the 810px height cap means a strip of this band is
+              visible above and below the frame on any viewport taller than that.
+              On darkgray that strip read as a warm #1d1c18 seam against the
+              embed's black; on black it is the same colour as the frame, so the
+              band edges vanish. See Footer.tsx for the cap itself. */}
+          <ColorSection color="black" as="footer">
             <Footer />
           </ColorSection>
 

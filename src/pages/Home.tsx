@@ -72,7 +72,7 @@ const contactGrid = css({
  *
  * The band rhythm follows BRIEF §5, minus the deleted About and Writing bands
  * and with Work recoloured: gray → aqua-light → yellow → purple, with the
- * darkgray footer supplied by Layout. No two adjacent bands share a colour,
+ * black footer supplied by Layout. No two adjacent bands share a colour,
  * which is the one hard rule of §3.3.
  */
 export const Home = () => (

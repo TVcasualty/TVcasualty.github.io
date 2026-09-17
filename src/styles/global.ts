@@ -53,10 +53,17 @@ export const globalCss = defineGlobalStyles({
     /* Overscroll at the very top and bottom of the page shows the colour of
        the first and last band rather than white. Once nav.js starts
        mirroring the active band onto <html>, the solid colour below takes
-       over — see the html[data-color] rule. */
+       over — see the html[data-color] rule.
+
+       The two stops are literally the first and last band's pageBg, so they
+       have to be kept in step with Layout: darkGray is the gray hero, and the
+       bottom stop is black because the footer band is `black` (it was
+       darkestGray while that band was darkgray). This only shows with JS off
+       or before nav.js boots, but getting it wrong means bottom rubber-band
+       overscroll flashes a warm gray against the footer embed's pure black. */
     backgroundColor: 'pageBg',
     backgroundImage:
-      'linear-gradient(to bottom, {colors.darkGray} 0 50%, {colors.darkestGray} 50% 100%)',
+      'linear-gradient(to bottom, {colors.darkGray} 0 50%, {colors.black} 50% 100%)',
     backgroundAttachment: 'fixed',
   },
   'html[data-color]': {

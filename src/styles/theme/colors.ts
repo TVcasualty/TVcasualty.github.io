@@ -164,16 +164,20 @@ export const semanticColors = defineSemanticTokens.colors({
    *
    * The exemption only covers text at >=18.66px bold, and this token is used at
    * wildly different sizes: the eyebrow is 0.9em nested inside a 2.4em
-   * `section h2`, so it renders 24px+ and does qualify — but the footer column
-   * headings (0.8em) render at 9.0px at 320px wide, and the spec-sheet labels
-   * (0.95em) at 10.6px. Those do not qualify at any width below 1100px.
+   * `section h2`, so it renders 24px+ and does qualify — but the spec-sheet
+   * labels (0.95em) render at 10.6px at 320px wide and do not qualify at any
+   * width below 1100px. The footer's column headings (0.8em, 9.0px at 320px)
+   * used to be the worst case here; they went with the footer's own markup when
+   * the band became a bare embed, and the spec sheet is now the binding one.
    *
-   * Only gray, darkgray and yellow carry small accent text *today*, so purple
-   * and aqua-light could technically keep a 3:1 colour. They are held to 4.5:1
-   * anyway: which bands host a small label is a function of page composition,
-   * and moving a footer or spec grid into another band should not silently
-   * introduce an accessibility failure. One rule per token is the safer
-   * invariant.
+   * Only gray, yellow and aqua-light carry small accent text *today* (the
+   * eyebrow and the spec-sheet labels), so the other bands could technically
+   * keep a 3:1 colour. They are held to 4.5:1 anyway: which bands host a small
+   * label is a function of page composition, and moving a footer or spec grid
+   * into another band should not silently introduce an accessibility failure.
+   * One rule per token is the safer invariant — and the footer moving from
+   * darkgray to black is exactly the kind of recolouring that would otherwise
+   * have needed this list revisited for correctness rather than just accuracy.
    *
    * `tools/check-contrast.py` derives the rendered px size of every element
    * from the shipped HTML and the rem ladder, so it decides the threshold per
